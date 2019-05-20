@@ -3,5 +3,23 @@
   "name": "lightkeeper",
   "alias": [
     "lightkeeper.alfre.do"
+  ],
+  "env": {
+    "APP_ID": "@app_id",
+    "NODE_ENV": "production",
+    "PRIVATE_KEY": "@private_key",
+    "WEBHOOK_SECRET": "@webhook_secret"
+  },
+  "builds": [
+    {
+      "src": "now.js",
+      "use": "@now/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/*",
+      "dest": "/now.js"
+    }
   ]
 }

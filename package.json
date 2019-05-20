@@ -1,0 +1,42 @@
+{
+  "name": "lightkeeper",
+  "version": "1.0.0",
+  "description": "Github App to run Lighthouse tests in CI",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon",
+    "start": "probot run",
+    "test": "ava"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lfre/lightkeeper.git"
+  },
+  "keywords": [
+    "lighthouse",
+    "tests",
+    "budgets",
+    "ci",
+    "deployments"
+  ],
+  "author": "Alfredo Lopez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lfre/lightkeeper/issues"
+  },
+  "homepage": "https://github.com/lfre/lightkeeper#readme",
+  "dependencies": {
+    "@chadfawcett/probot-serverless-now": "^1.0.0",
+    "probot": "^9.2.11"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.0"
+  },
+  "nodemonConfig": {
+    "exec": "npm start",
+    "watch": [
+      ".env",
+      "."
+    ]
+  }
+}
