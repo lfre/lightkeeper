@@ -6,6 +6,7 @@
   ],
   "env": {
     "APP_ID": "@app_id",
+    "APP_NAME": "Lightkeeper",
     "NODE_ENV": "production",
     "PRIVATE_KEY": "@private_key",
     "WEBHOOK_SECRET": "@webhook_secret"
