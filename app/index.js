@@ -1,4 +1,3 @@
-const runLighthouse = require('./lighthouse');
 const { homepage: pkgHomepage } = require('../package.json');
 const {
   APP_NAME = 'Lightkeeper',
@@ -14,16 +13,6 @@ class Lightkeeper {
     this.isDev = NODE_ENV === 'development';
     // start listening for completed checks
     this.app.on('check_run.completed', this.onCompletedCheck.bind(this));
-
-    // redirect all GET to the frontend on prod
-    if (this.isDev) {
-      const router = app.route('/');
-      router.get('*', (req, res) => res.redirect(APP_HOMEPAGE))
-    }
-
-    /* (async() => {
-      await runLighthouse();
-    })(); */
   }
 
   async getConfiguration(context, { head_branch, pull_number, github }) {
@@ -57,6 +46,7 @@ class Lightkeeper {
    * @param {object} context The webhook payload
    */
   async onCompletedCheck(context) {
+    this.logger.info('IT WORKS AGAIN');
     const { github } = context;
     // Destructure variables from the event payload
     const {

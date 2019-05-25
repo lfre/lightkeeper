@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "nodemon",
     "start": "probot run ./index.js",
-    "now-dev": "probot run ./index.js",
     "test": "ava"
   },
   "repository": {
@@ -28,11 +27,7 @@
   "homepage": "https://lightkeeper.dev",
   "dependencies": {
     "@chadfawcett/probot-serverless-now": "^1.0.0",
-    "chrome-aws-lambda": "^1.17.0",
-    "chrome-launcher": "^0.10.7",
-    "lighthouse": "^5.0.0",
-    "probot": "^9.2.11",
-    "puppeteer-core": "^1.17.0"
+    "probot": "^9.2.11"
   },
   "devDependencies": {
     "nodemon": "^1.19.0",

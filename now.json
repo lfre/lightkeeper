@@ -9,20 +9,28 @@
     "APP_NAME": "Lightkeeper",
     "NODE_ENV": "production",
     "PRIVATE_KEY": "@private_key",
-    "WEBHOOK_SECRET": "@webhook_secret"
+    "WEBHOOK_SECRET": "@webhook_secret",
+    "WEBHOOK_PROXY_URL":"https: //smee.io/R0W5oO0M5AB5zl9"
   },
   "builds": [
     {
-      "src": "now.js",
-      "use": "@now/node",
+      "src": "lighthouse/index.js",
+      "use": "@nkzawa/now-node-raw",
       "config": {
-        "maxLambdaSize": "50mb"
+        "includeFiles": [
+          "lighthouse/node_modules/**"
+        ],
+        "maxLambdaSize": "100mb"
       }
+    },
+    {
+      "src": "now.js",
+      "use": "@now/node"
     }
   ],
   "routes": [
     {
-      "src": "/*",
+      "src": "/",
       "dest": "/now.js"
     }
   ]
