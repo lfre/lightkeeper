@@ -14,7 +14,10 @@
   "builds": [
     {
       "src": "now.js",
-      "use": "@now/node"
+      "use": "@now/node",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
     }
   ],
   "routes": [

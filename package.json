@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon",
     "start": "probot run ./index.js",
+    "now-dev": "probot run ./index.js",
     "test": "ava"
   },
   "repository": {
@@ -24,11 +25,14 @@
   "bugs": {
     "url": "https://github.com/lfre/lightkeeper/issues"
   },
-  "homepage": "https://github.com/lfre/lightkeeper#readme",
+  "homepage": "https://lightkeeper.dev",
   "dependencies": {
     "@chadfawcett/probot-serverless-now": "^1.0.0",
+    "chrome-aws-lambda": "^1.17.0",
+    "chrome-launcher": "^0.10.7",
     "lighthouse": "^5.0.0",
-    "probot": "^9.2.11"
+    "probot": "^9.2.11",
+    "puppeteer-core": "^1.17.0"
   },
   "devDependencies": {
     "nodemon": "^1.19.0",
