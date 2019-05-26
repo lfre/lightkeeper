@@ -26,10 +26,10 @@
   },
   "homepage": "https://lightkeeper.dev",
   "dependencies": {
-    "@chadfawcett/probot-serverless-now": "^1.0.0",
     "probot": "^9.2.11"
   },
   "devDependencies": {
+    "dotenv": "^8.0.0",
     "nodemon": "^1.19.0",
     "smee-client": "^1.1.0"
   },

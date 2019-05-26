@@ -3,19 +3,6 @@ const puppeteer = require('puppeteer-core');
 const lighthouse = require('lighthouse');
 const { parse } = require('url');
 
-/* module.exports = async function runLighthouse() {
-  const browser = await puppeteer.launch({
-    args: chrome.args,
-    executablePath: await chrome.executablePath,
-    headless: chrome.headless,
-  });
-
-  const { lhr } = await lighthouse('https://www.youtube.com/', {
-    port: (new URL(browser.wsEndpoint())).port,
-    output: 'json',
-    logLevel: 'info',
-  }); */
-
 let args;
 let executablePath;
 if (process.platform === "darwin") {

@@ -1,8 +1,5 @@
-const { homepage: pkgHomepage } = require('../package.json');
 const {
   APP_NAME = 'Lightkeeper',
-  APP_HOMEPAGE = pkgHomepage,
-  NODE_ENV = 'development',
   CONFIG_FILE_PATH = '.github/lightkeeper.json',
 } = process.env;
 
@@ -10,7 +7,6 @@ class Lightkeeper {
   constructor(app) {
     this.app = app;
     this.logger = this.app.log.child({ name: APP_NAME })
-    this.isDev = NODE_ENV === 'development';
     // start listening for completed checks
     this.app.on('check_run.completed', this.onCompletedCheck.bind(this));
   }
@@ -46,7 +42,6 @@ class Lightkeeper {
    * @param {object} context The webhook payload
    */
   async onCompletedCheck(context) {
-    this.logger.info('IT WORKS AGAIN');
     const { github } = context;
     // Destructure variables from the event payload
     const {

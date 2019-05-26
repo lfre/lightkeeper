@@ -9,8 +9,7 @@
     "APP_NAME": "Lightkeeper",
     "NODE_ENV": "production",
     "PRIVATE_KEY": "@private_key",
-    "WEBHOOK_SECRET": "@webhook_secret",
-    "WEBHOOK_PROXY_URL":"https: //smee.io/R0W5oO0M5AB5zl9"
+    "WEBHOOK_SECRET": "@webhook_secret"
   },
   "builds": [
     {
@@ -30,7 +29,7 @@
   ],
   "routes": [
     {
-      "src": "/",
+      "src": "^/(?!lighthouse).*",
       "dest": "/now.js"
     }
   ]
