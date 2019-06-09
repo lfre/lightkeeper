@@ -2,11 +2,13 @@ const {
   APP_NAME = 'Lightkeeper',
   CONFIG_FILE_PATH = '.github/lightkeeper.json',
 } = process.env;
+const { homepage } = require('../package.json');
 
 class Lightkeeper {
   constructor(app) {
     this.app = app;
     this.logger = this.app.log.child({ name: APP_NAME })
+    this.configUrl = `${homepage}/docs#configuration`;
     // start listening for completed checks
     this.app.on('check_run.completed', this.onCompletedCheck.bind(this));
   }
@@ -76,9 +78,9 @@ class Lightkeeper {
           conclusion: 'neutral',
           completed_at: new Date(),
           output: {
-            title: 'Missing configuration file .github/lightkeeper.json',
-            summary: 'More info at http://ligthkeeper.alfre.do/docs#configuration',
-            details_url: 'http://lightkeeper.alfre.do/docs#configuration'
+            title: 'Missing configuration file: `.github/lightkeeper.json`',
+            summary: `More info at: ${this.configUrl}`,
+            details_url: this.configUrl
           }
         }))
       }

@@ -2,11 +2,12 @@
   "version": 2,
   "name": "lightkeeper",
   "alias": [
-    "lightkeeper.alfre.do"
+    "app.lightkeeper.dev"
   ],
   "env": {
     "APP_ID": "@app_id",
     "APP_NAME": "Lightkeeper",
+    "LOG_LEVEL": "error",
     "NODE_ENV": "production",
     "PRIVATE_KEY": "@private_key",
     "WEBHOOK_SECRET": "@webhook_secret"
@@ -23,14 +24,41 @@
       }
     },
     {
-      "src": "now.js",
+      "src": "now/index.js",
       "use": "@now/node"
     }
   ],
   "routes": [
     {
-      "src": "^/(?!lighthouse).*",
-      "dest": "/now.js"
+      "src": "^/lighthouse",
+      "dest": "lighthouse/index.js",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "src": "^/.*",
+      "status": 301,
+      "headers": {
+        "Location": "https://lightkeeper.dev/"
+      },
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "src": "^/",
+      "dest": "now/index.js",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "src": "^/.*",
+      "status": 403,
+      "methods": [
+        "POST"
+      ]
     }
   ]
 }
