@@ -26,6 +26,7 @@
   },
   "homepage": "https://lightkeeper.dev",
   "dependencies": {
+    "micro": "^9.3.4",
     "probot": "^9.2.11"
   },
   "devDependencies": {

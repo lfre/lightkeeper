@@ -3,7 +3,8 @@ const Checks = require('./checks');
 const Configuration = require('./configuration');
 
 const {
-  APP_NAME: appName = 'Lightkeeper'
+  APP_NAME: appName = 'Lightkeeper',
+  LIGHTHOUSE_URL: lighthouseUrl
 } = process.env;
 
 class Lightkeeper {
@@ -12,6 +13,7 @@ class Lightkeeper {
     this.logger = this.app.log.child({ name: appName });
     this.checks = new Checks(appName);
     this.configuration = new Configuration(this);
+    this.lighthouseUrl = lighthouseUrl;
     // start listening for completed checks
     this.app.on('check_run.completed', this.onCompletedCheck.bind(this));
   }
@@ -62,7 +64,6 @@ class Lightkeeper {
     if (!namesToCheck.length) {
       return;
     }
-
   }
 }
 
