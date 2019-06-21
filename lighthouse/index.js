@@ -120,8 +120,9 @@ module.exports = async (req, res) => {
   } = result;
 
   // Compile the scores
-  const scores = Object.values(categories).reduce((output, { id, score }) => {
-    output[id] = score * 100;
+  const categories = Object.values(categories).reduce((output, { id, title, score }) => {
+    const score = score * 100;
+    output[id] = { score, title };
     return output;
   }, {});
 
@@ -129,5 +130,5 @@ module.exports = async (req, res) => {
 
   const report = await compress(JSON.stringify(jsonReport), { level: 9 });
 
-  send(res, 200, { scores, budgets, report });
+  send(res, 200, { categories, budgets, report });
 }
