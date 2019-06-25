@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Github App to run Lighthouse tests in CI",
   "main": "index.js",
+  "engines": {
+    "node": "10.x"
+  },
   "scripts": {
     "dev": "nodemon",
     "start": "probot run ./index.js",
@@ -26,7 +29,6 @@
   },
   "homepage": "https://lightkeeper.dev",
   "dependencies": {
-    "micro": "^9.3.4",
     "probot": "^9.2.11"
   },
   "devDependencies": {

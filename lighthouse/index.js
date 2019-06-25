@@ -1,8 +1,3 @@
-// This is a fix for Node v.8
-// Remove when v.10 is supported in Lambdas
-// https://github.com/GoogleChrome/lighthouse/issues/8909
-global.URL = require('url').URL;
-
 const {
   createHmac,
   pseudoRandomBytes,
@@ -14,7 +9,8 @@ const lighthouse = require('lighthouse');
 const { parse } = require('url');
 const { promisify } = require("util");
 const { gzip } = require("zlib");
-const { json, send } = require('micro');
+const { parse: qsParse } = require('querystring');
+const { send } = require('micro');
 const defaultConfig = require('./default.json');
 
 const {
@@ -77,6 +73,27 @@ const timeSafeCompare = function (a, b) {
   return timingSafeEqual(ah, bh) && a === b;
 }
 
+const json = async function jsonParse(req) {
+  return new Promise(resolve => {
+    let body = '';
+    let output;
+
+    req.on('data', function onData(data) {
+      body += data;
+      if (body.length > 1e6) {
+        send(res, 413, {
+          error: 'Request too large'
+        });
+      }
+    });
+
+    req.on('end', function onEnd() {
+      output = qsParse(body);
+      resolve(output);
+    });
+  });
+}
+
 module.exports = async (req, res) => {
   let result;
   let error;
@@ -87,11 +104,12 @@ module.exports = async (req, res) => {
     });
     return;
   }
+  // TODO: Switch to `json` from micro again when is fixed
   const {
-    url,
-    options = {},
-    config = {},
-    puppeteerConfig = {}
+      url,
+      options = {},
+      config = {},
+      puppeteerConfig = {}
   } = await json(req);
 
   if (!url || !url.startsWith('http')) {
@@ -113,15 +131,15 @@ module.exports = async (req, res) => {
 
   const {
     lhr: {
-      categories,
+      categories: lhCategories,
       audits
     },
     report: jsonReport
   } = result;
 
   // Compile the scores
-  const categories = Object.values(categories).reduce((output, { id, title, score }) => {
-    const score = score * 100;
+  const categories = Object.values(lhCategories).reduce((output, { id, title, score }) => {
+    score = score * 100;
     output[id] = { score, title };
     return output;
   }, {});

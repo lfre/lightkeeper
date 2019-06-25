@@ -1,7 +1,11 @@
 {
+  "engines": {
+    "node": "10.x"
+  },
   "dependencies": {
     "chrome-aws-lambda": "1.15.1",
     "lighthouse": "^5.1.0",
+    "micro": "^9.3.4",
     "puppeteer-core": "1.15.0"
   }
 }
