@@ -42,23 +42,18 @@ class Configuration {
   }
 
   async getConfiguration(context, { head_branch, head_sha, pull_number, github }) {
-    let configuration = false;
+    let configuration = {};
     let missingKeys = this.requiredKeys;
     try {
       const { data: { content } } = await this.getConfigFile(context, { head_branch, pull_number, github });
       configuration = JSON.parse(Buffer.from(content, 'base64').toString());
     } catch (error) {
+      // Exit early if config was not found
+      // A neutral check used to be here,
+      // but since it could be confusing to other repos in the same org
+      // it was removed. See the history of the lines below.
       if (error.status === 404) {
-        this.app.checks.complete(context, github, {
-          head_branch,
-          head_sha,
-          conclusion: 'neutral',
-          output: {
-            title: `Missing configuration file: ${CONFIG_FILE_PATH}`,
-            summary: `More info at: ${this.detailsUrl}`,
-            details_url: this.detailsUrl
-          }
-        });
+        return configuration;
       }
     }
     // Check for required keys
@@ -74,7 +69,8 @@ class Configuration {
             summary: `More info at: ${this.detailsUrl}`,
             details_url: this.detailsUrl
           }
-        })
+        });
+        return {};
       }
       // standardize CI name
       configuration.ci = configuration.ci.toLowerCase();

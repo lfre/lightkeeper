@@ -8,7 +8,7 @@
     "APP_ID": "@app_id",
     "APP_NAME": "Lightkeeper",
     "EXEC_PATH": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "LIGHTHOUSE_URL": "https://app.lightkeeper.dev/lighthouse/",
+    "LIGHTHOUSE_URL": "https://app.lightkeeper.dev/lighthouse",
     "LOG_LEVEL": "error",
     "NODE_ENV": "production",
     "PRIVATE_KEY": "@private_key",
@@ -33,7 +33,7 @@
   ],
   "routes": [
     {
-      "src": "^/lighthouse",
+      "src": "^/lighthouse(/)?",
       "dest": "lighthouse/index.js",
       "methods": [
         "POST"
@@ -50,7 +50,7 @@
       ]
     },
     {
-      "src": "^/",
+      "src": "^/$",
       "dest": "now/index.js",
       "methods": [
         "POST"

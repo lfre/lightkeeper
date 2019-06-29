@@ -29,6 +29,7 @@
   },
   "homepage": "https://lightkeeper.dev",
   "dependencies": {
+    "axios": "^0.19.0",
     "probot": "^9.2.11"
   },
   "devDependencies": {
