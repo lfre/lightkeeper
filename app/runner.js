@@ -8,12 +8,15 @@ class Runner {
   constructor() {
     this.lighthouseUrl = lighthouseUrl;
     this.lighthouseAuth = secret;
-    this.instance = null;
-    this.instanceSettings = {};
-    this.installationNode = null;
+    this.installationNode = '';
     this.options = {};
   }
 
+  /**
+   * Parses the global lighthouse options
+   *
+   * @param {object} config The lighthouse config
+   */
   parseConfig(config = {}) {
     let lhUrl;
     let lhOptions = {};
@@ -31,6 +34,11 @@ class Runner {
     return { lhUrl, lhOptions };
   }
 
+  /**
+   * Sets up the global lighthouse options
+   * @param {object} config The global lighthouse config
+   * @param {string} installationNode The installation node
+   */
   setup(config = {}, installationNode) {
     // If lighthouse options have been passed, override defaults
     const { lhUrl, lhOptions } = this.parseConfig(config);
@@ -38,43 +46,54 @@ class Runner {
     this.options = lhOptions;
     this.installationNode = installationNode;
 
-    if (lhUrl) {
-      this.lighthouseUrl = lhUrl;
-    }
-
     /*
-      If a custom lighthouse url was provided
-      use the installation `node_id` as auth
-      This will be passed as an `Authentication` header
+      If a custom lighthouse url was provided,
+      we use the installation `node_id` as auth.
+      This will be passed as an `Authorization` header.
       You can also find it using the Github API:
-      See: https://developer.github.com/v3/apps/#get-an-installation
+      https://developer.github.com/v3/apps/#get-an-installation
 
-      This is better than anything for the momentt
-      so I welcome any suggestions here (without accessing code).
+      This is better than anything for the moment.
+      Suggestions welcome (without accessing user code).
 
-      To "rotate" keys, uninstall and install the app again 🤷
+      To "rotate" keys, uninstall and install the app again.
     */
-    if (this.lighthouseUrl !== lighthouseUrl) {
+    if (lhUrl && lhUrl !== lighthouseUrl) {
+      this.lighthouseUrl = lhUrl;
       this.lighthouseAuth = this.installationNode;
+    } else {
+      this.filterOptions();
     }
 
     if (!this.lighthouseUrl || !this.lighthouseAuth){
       throw new Error('The Lighthouse endpoint and auth token are required');
     }
-
-    this.instanceSettings = {
-      baseUrl: this.lighthouseUrl,
-      timeout: 1000,
-      headers: {
-        Authentication: this.lighthouseAuth
-      }
-    };
-
-    this.instance = axios.create(this.instanceSettings);
   }
 
+  /**
+   * Filters the request body if using the default LH endpoint.
+   * This helps reduce body length and other shenanigans.
+   */
+  filterOptions() {
+    const keys = ['options', 'config', 'puppeteerConfig'];
+    const validated = {};
+    keys.forEach(key => {
+      const obj = this.options[key];
+      if (obj !== null && typeof obj === 'object' && Object.keys(obj).length) {
+        validated[key] = obj;
+      }
+    });
+    this.options = validated;
+  }
+
+  /**
+   * Sends a request to a Lighthouse endpoint
+   * @param {string} url The url to test
+   * @param {object} budgets Performance budgets
+   * @param {obbject} config Route LH config
+   */
   async run(url, budgets, config) {
-    let endpointUrl;
+    let endpointUrl = this.lighthouseUrl;
     let auth = this.lighthouseAuth;
     let requestOptions = this.options;
 
@@ -82,11 +101,10 @@ class Runner {
     if (config) {
       const { lhUrl, lhOptions } = this.parseConfig(config);
       requestOptions = { ...requestOptions, lhOptions };
-      if (lhUrl) {
+      // This allows a progressive switch to a custom LH endpoint
+      if (lhUrl && lhUrl !== lighthouseUrl) {
         endpointUrl = lhUrl;
-        if (lhUrl !== this.lighthouseUrl) {
-          auth = this.installationNode;
-        }
+        auth = this.installationNode;
       }
     }
     // add performance-bugets
@@ -95,32 +113,18 @@ class Runner {
       requestOptions.config = { ...(requestOptions.config && {}), settings };
     }
 
-    const instance = endpointUrl ? axios.create({ ...this.instanceSettings,
-      baseUrl: endpointUrl,
-      headers: {
-        Authentication: auth
-      }
-    }) : this.instance;
-
-    // validate options if using the embedded lighthouse to reduce body size
-    if (!endpointUrl || this.lighthouseUrl === lighthouseUrl) {
-      const keys = [ 'options', 'config', 'puppeteerConfig' ];
-      const validated = {};
-      keys.forEach(key => {
-        const obj = requestOptions[key];
-        if (obj !== null && typeof obj === 'object' && Object.keys(obj).length) {
-          validated[key] = obj;
-        }
-      });
-      requestOptions = validated;
-    }
-
-    return instance.post('/', {
+    return axios({
+      url: endpointUrl,
+      method: 'post',
       data: {
         ...requestOptions,
-        url
+        url // this is the url to test
+      },
+      timeout: 60000,
+      headers: {
+        Authorization: auth
       }
-    })
+    });
   }
 }
 

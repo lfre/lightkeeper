@@ -76,7 +76,6 @@ class Lightkeeper {
     });
     // Return if this a different check
     if (!namesToCheck.length) {
-      console.log(ciName);
       return;
     }
 
@@ -100,16 +99,14 @@ class Lightkeeper {
 
     // Setup routes or only run the baseUrl
     const urlRoutes = Array.isArray(routes) && routes.length ? routes : [
-      this.urlFormatter()
+      this.urlFormatter() // returns the formatted baseUrl
     ];
 
     // Process each route and send a request
-    const results = await Promise.all(this.processRoutes(urlRoutes, {
+    await Promise.all(this.processRoutes(urlRoutes, {
       settings,
       namedSettings
     }));
-
-    console.log(results);
   }
 
   /**
@@ -121,8 +118,8 @@ class Lightkeeper {
     const { categories, budgets, lighthouse, reportOnly } = settings;
     // filter invalid route types
     const filter = route => (
-      typeof route === 'string' ||
-      (route !== null && typeof route === 'object')
+      (typeof route === 'string' && route) ||
+      (route !== null && typeof route === 'object' && route.url)
     );
 
     return urlRoutes.filter(filter).map(async (route) => {
@@ -130,8 +127,17 @@ class Lightkeeper {
 
       if (typeof route === 'string') {
         route = this.urlFormatter(route);
-        result = await this.runner.run(route, budgets, lighthouse);
+      } else {
+        route = this.urlFormatter(route.url);
       }
+
+      try {
+        result = await this.runner.run(route, budgets, lighthouse);
+      } catch (err) {
+        this.logger.error('Lighthouse request failed', err);
+        return;
+      }
+
       // check that it was a succesfull response
       // run checks
       // add to store with properties

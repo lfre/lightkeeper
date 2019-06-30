@@ -15,7 +15,6 @@ const lighthouse = require('lighthouse');
 const { parse } = require('url');
 const { promisify } = require("util");
 const { gzip } = require("zlib");
-const { parse: qsParse } = require('querystring');
 const { send } = require('micro');
 const defaultConfig = require('./default.json');
 
@@ -79,7 +78,6 @@ const timeSafeCompare = function (a, b) {
 const json = async function jsonParse(req) {
   return new Promise(resolve => {
     let body = '';
-    let output;
 
     req.on('data', function onData(data) {
       body += data;
@@ -91,8 +89,7 @@ const json = async function jsonParse(req) {
     });
 
     req.on('end', function onEnd() {
-      output = qsParse(body);
-      resolve(output);
+      resolve(JSON.parse(body));
     });
   });
 }
@@ -115,7 +112,14 @@ module.exports = async (req, res) => {
       puppeteerConfig = {}
   } = await json(req);
 
-  if (!url || !url.startsWith('http')) {
+  if (!url) {
+    send(res, 400, {
+      error: 'The URL is missing'
+    });
+    return;
+  }
+
+  if (!url.startsWith('http')) {
     send(res, 400, {
       error: 'The URL must start with http'
     });
