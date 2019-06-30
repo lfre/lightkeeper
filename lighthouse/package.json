@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "now-build": "cp cri.js node_modules/lighthouse/lighthouse-core/gather/connections/cri.js"
+  },
   "engines": {
     "node": "10.x"
   },
