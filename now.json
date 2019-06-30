@@ -22,7 +22,7 @@
         "includeFiles": [
           "lighthouse/node_modules/**"
         ],
-        "maxLambdaSize": "50mb",
+        "maxLambdaSize": "100mb",
         "runtime": "nodejs10.x"
       }
     },
