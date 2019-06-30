@@ -1,3 +1,9 @@
+// This is a fix for Node v.8
+// Remove when v.10 is supported in chrome-aws-lamdba
+// https://github.com/alixaxel/chrome-aws-lambda#usage
+// https://github.com/alixaxel/chrome-aws-lambda/issues/37
+global.URL = require('url').URL;
+
 const {
   createHmac,
   pseudoRandomBytes,
@@ -18,9 +24,6 @@ const {
   EXEC_PATH: execPath
 } = process.env;
 const compress = promisify(gzip);
-
-let args;
-let executablePath;
 
 if (process.platform === 'darwin') {
   args = chrome.args.filter(a => a !== '--single-process');
