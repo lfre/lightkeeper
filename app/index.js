@@ -1,7 +1,7 @@
-const Checks = require('./checks');
+const Status = require('./status');
 const Configuration = require('./configuration');
 const Runner = require('./runner'); // 🏃
-const { replaceMacros, urlFormatter } = require('./util');
+const { extendSettings, urlFormatter } = require('./util');
 
 const {
   APP_NAME: appName = 'Lightkeeper',
@@ -11,8 +11,9 @@ class Lightkeeper {
   constructor(app) {
     this.app = app;
     this.logger = this.app.log.child({ name: appName });
-    this.checks = new Checks(appName);
-    this.configuration = new Configuration(this);
+    this.appParams = { appName, github: {}, context: {} };
+    this.status = new Status(this.appParams);
+    this.configuration = new Configuration(this.appParams, this.status);
     this.runner = new Runner();
     this.urlFormatter = null;
     // start listening for completed checks
@@ -24,7 +25,7 @@ class Lightkeeper {
    * @param {object} context The webhook payload
    */
   async onCompletedCheck(context) {
-    const { github } = context;
+    ({ github: this.appParams.github, ...this.appParams.context } = context);
     // Destructure variables from the event payload
     const {
       check_run: {
@@ -37,8 +38,8 @@ class Lightkeeper {
         name,
         conclusion,
         check_suite: {
-          head_branch,
-          head_sha
+          head_branch: headBranch,
+          head_sha: headSha
         },
         pull_requests
       },
@@ -53,7 +54,14 @@ class Lightkeeper {
     // Exit if this is not a Pull Request check
     if (!pull_requests.length) return;
 
-    const { number: pull_number } = pull_requests[0];
+    ({ number: pullNumber } = pull_requests[0]);
+    // add to parameters
+    this.appParams = { ...this.appParams,
+      pullNumber,
+      headBranch,
+      headSha
+    };
+
     const {
       baseUrl,
       ci: ciName,
@@ -62,12 +70,7 @@ class Lightkeeper {
       routes = [],
       settings = {},
       namedSettings = {}
-    } = await this.configuration.getConfiguration(context, {
-      head_branch,
-      head_sha,
-      pull_number,
-      github
-    });
+    } = await this.configuration.getConfiguration();
     // return early if the config targets a different type
     // this allows targetting deployments, or older `status` workflows.
     if (!baseUrl || type !== 'check') return;
@@ -86,16 +89,12 @@ class Lightkeeper {
       this.logger.error(err);
       return;
     }
-
-    // Set macros
-    const macros = {
-      '{branch}': head_branch,
-      '{commit_hash}': head_sha,
-      '{pr_number}': pull_number
-    };
-
-    // set up the utility that formats urls
-    this.urlFormatter = urlFormatter(baseUrl, macros);
+    // set up the url formatter
+    this.urlFormatter = urlFormatter(baseUrl, {
+      '{branch}': headBranch,
+      '{commit_hash}': headSha,
+      '{pr_number}': pullNumber
+    });
 
     // Setup routes or only run the baseUrl
     const urlRoutes = Array.isArray(routes) && routes.length ? routes : [
@@ -115,24 +114,59 @@ class Lightkeeper {
    * @param {object} settings Base and optional settings
    */
   processRoutes(urlRoutes = [], { settings, namedSettings }) {
-    const { categories, budgets, lighthouse, reportOnly } = settings;
+    const { categories = {}, budgets = [], lighthouse = {}, reportOnly = false } = settings;
     // filter invalid route types
     const filter = route => (
       (typeof route === 'string' && route) ||
-      (route !== null && typeof route === 'object' && route.url)
+      (route && typeof route === 'object' && route.url)
     );
 
     return urlRoutes.filter(filter).map(async (route) => {
       let result;
+      const runnerArgs = [];
+      const requestSettings = {
+        categories,
+        budgets,
+        lighthouse,
+        reportOnly
+      };
 
       if (typeof route === 'string') {
         route = this.urlFormatter(route);
       } else {
         route = this.urlFormatter(route.url);
+        const { routeSettings = null } = route.settings || {};
+
+        // if settings are false, pass global options, but disable warnings/errors
+        if (routeSettings === false) {
+          requestSettings.reportOnly = true;
+        } else {
+          try {
+            if (typeof routeSettings === 'string') {
+              // settings: 'article'
+              extendSettings(routeSettings, requestSettings);
+            } else if (routeSettings && typeof routeSettings === 'object') {
+              /*
+                settings: {
+                  extend: true // extend from global
+                  budgets: {...}
+                }
+              */
+              if (routeSettings.extend) {
+                const rawSettings = { extend, ...routeSettings };
+                extendSettings(extend, requestSettings, rawSettings);
+              }
+            }
+          } catch(err) {
+
+          }
+        }
       }
 
+      runnerArgs.push(route);
+
       try {
-        result = await this.runner.run(route, budgets, lighthouse);
+        result = await this.runner.run(...runnerArgs);
       } catch (err) {
         this.logger.error('Lighthouse request failed', err);
         return;

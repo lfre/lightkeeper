@@ -4,18 +4,23 @@ const {
 } = process.env;
 
 class Configuration {
-  constructor(app) {
-    this.app = app;
+  constructor(params, status) {
+    this.params = params;
+    this.status = status;
     this.detailsUrl = `${homepage}/docs#configuration`;
     this.requiredKeys = ['baseUrl', 'ci'];
   }
 
   /**
    * Gets the configuration file contents from the PR or base branch
-   * @param {object} context The event context object
-   * @param {object} {head_branch, pull_number, github} Payload parameters
    */
-  async getConfigFile(context, { head_branch, pull_number, github }) {
+  async getConfigFile() {
+    const {
+      context,
+      github,
+      headBranch: ref,
+      pullNumber: pull_number
+    } = this.params;
     const { owner, repo } = context.repo();
 
     const { data: prFiles } = await github.pullRequests.listFiles(
@@ -31,7 +36,7 @@ class Configuration {
         owner,
         repo,
         path: CONFIG_FILE_PATH,
-        ref: head_branch
+        ref
       })
     }
     return github.repos.getContents({
@@ -41,11 +46,11 @@ class Configuration {
     })
   }
 
-  async getConfiguration(context, { head_branch, head_sha, pull_number, github }) {
+  async getConfiguration() {
     let configuration = {};
     let missingKeys = this.requiredKeys;
     try {
-      const { data: { content } } = await this.getConfigFile(context, { head_branch, pull_number, github });
+      const { data: { content } } = await this.getConfigFile();
       configuration = JSON.parse(Buffer.from(content, 'base64').toString());
     } catch (error) {
       // Exit early if config was not found
@@ -60,9 +65,7 @@ class Configuration {
     if (configuration) {
       missingKeys = missingKeys.filter(key => !(configuration[key] && typeof configuration[key] === 'string'));
       if (missingKeys.length) {
-        this.app.checks.complete(context, github, {
-          head_branch,
-          head_sha,
+        this.status.complete({
           conclusion: 'action_required',
           output: {
             title: `Missing required keys or invalid types: ${missingKeys.join(',')}`,

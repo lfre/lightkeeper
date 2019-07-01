@@ -1,5 +1,17 @@
 const { join } = require('path');
 
+const mergeSettings = function (base, override) {
+  // budgets map, get keys, get obj from newbUDGETS, loop through keys, check in obj, do unionBy
+}
+
+const extendSettings = function (extend, baseSettings, newSettings = {}) {
+  // if true, merge new into base
+  // if a string, get namedSetting
+  // if namedSetting is true, merge namedSetting, into base, then newSettings into it.
+  // else use namedSettings
+  // if settings is a string, extend a shared setting
+}
+
 /**
  * Replaces dynamic values in urls
  * @param {object} keyMap The key/value macros
@@ -35,4 +47,4 @@ const urlFormatter = (baseUrl, macros = {}) => {
   }
 }
 
-module.exports = { replaceMacros, urlFormatter }
+module.exports = { extendSettings, replaceMacros, urlFormatter }
