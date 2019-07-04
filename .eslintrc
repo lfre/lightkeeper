@@ -10,6 +10,7 @@
   "rules": {
     "no-bitwise": ["error", { "int32Hint": true }],
     "camelcase": "off",
-    "no-param-reassign": "off"
+    "no-param-reassign": "off",
+    "import/no-extraneous-dependencies": "off"
   }
 }
