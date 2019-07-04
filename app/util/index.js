@@ -16,6 +16,46 @@ function extendFromSettings(namedSettings) {
 }
 
 /**
+ * Finds the pull request number from a commit hash
+ * @param {object} github Octokit github client
+ * @param {string} headSha The commit hash in the PR
+ */
+async function getPullRequestNumber(github, headSha) {
+  const { data: { items = [] } = {} } = await github.search.issuesAndPullRequests({
+    q: `SHA=${headSha}`,
+    per_page: 1
+  });
+
+  if (!items.length) return null;
+
+  // find the pr number
+  const { number: pullNumber } = items.pop();
+
+  return pullNumber;
+}
+
+/**
+ * Compares multiple names against the name provided in config
+ * @param {array} namesToCheck The list of possible CI name
+ * @param {string} typeCheck The string to check against
+ * @param {function} checkFunction An optional function to override the equal check
+ */
+function isValidCheck(namesToCheck = [], typeCheck = 'check', checkFunction) {
+  const checker = typeof checkFunction === 'function' ? checkFunction : false;
+  return (type, ciName) => {
+    const valid = namesToCheck.filter(checkName => {
+      const nameToCheck = checkName.toLowerCase();
+      return checker ? checker(nameToCheck, ciName) : nameToCheck === ciName;
+    });
+    // Return if this a different type or check
+    if (type !== typeCheck || !valid.length) {
+      return false;
+    }
+    return true;
+  };
+}
+
+/**
  * Replaces dynamic values in urls
  * @param {object} keyMap The key/value macros
  */
@@ -69,25 +109,9 @@ function urlFormatter(baseUrl, macros = {}) {
   };
 }
 
-/**
- * Compares multiple names against the name provided in config
- * @param {array} namesToCheck The list of possible CI name
- */
-function isValidCheck(namesToCheck = [], typeCheck = 'check') {
-  return (type, ciName) => {
-    const valid = namesToCheck.filter(checkName => {
-      return checkName.toLowerCase() === ciName;
-    });
-    // Return if this a different type or check
-    if (type !== typeCheck || !valid.length) {
-      return false;
-    }
-    return true;
-  };
-}
-
 module.exports = {
   extendFromSettings,
+  getPullRequestNumber,
   isValidCheck,
   parseConfig,
   replaceMacros,

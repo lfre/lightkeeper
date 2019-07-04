@@ -1,7 +1,7 @@
 const Status = require('./status');
 const Configuration = require('./configuration');
 const Runner = require('./runner'); // 🏃
-const { extendFromSettings, isValidCheck, urlFormatter } = require('./util');
+const { extendFromSettings, getPullRequestNumber, isValidCheck, urlFormatter } = require('./util');
 
 const { APP_NAME: appName = 'Lightkeeper' } = process.env;
 
@@ -22,6 +22,7 @@ class Lightkeeper {
     this.app.on('check_run.completed', this.onCompletedCheck.bind(this));
     this.app.on('check_run.rerequested', this.onRequestedCheck.bind(this));
     this.app.on('deployment_status', this.onDeployment.bind(this));
+    this.app.on('status', this.onStatus.bind(this));
   }
 
   /**
@@ -107,15 +108,9 @@ class Lightkeeper {
     // skip for started or failed statuses
     if (state !== 'success' || !headSha || environment !== 'staging') return;
 
-    const { data: { items = [] } = {} } = await context.github.search.issuesAndPullRequests({
-      q: `SHA=${headSha}`,
-      per_page: 1
-    });
+    const pullNumber = await getPullRequestNumber(context.github, headSha);
 
-    if (!items.length) return;
-
-    // find the pr number
-    const { number: pullNumber } = items.pop();
+    if (!pullNumber) return;
 
     // get the branch name
     const {
@@ -133,6 +128,36 @@ class Lightkeeper {
       null,
       { pullNumber, headBranch, headSha, installationNode },
       isValidCheck([login], 'deployment'),
+      { '{target_url}': target_url }
+    );
+  }
+
+  /**
+   * Runs when a status is posted
+   * @param {object} context The github context
+   */
+  async onStatus(context) {
+    const {
+      target_url,
+      context: name,
+      state,
+      commit: { sha: headSha },
+      branches: [{ name: headBranch }],
+      sender: { login },
+      installation: { node_id: installationNode }
+    } = context.payload;
+
+    if (state !== 'success' || !headSha) return;
+
+    const pullNumber = await getPullRequestNumber(context.github, headSha);
+
+    if (!pullNumber) return;
+
+    await this.run(
+      context,
+      null,
+      { pullNumber, headBranch, headSha, installationNode },
+      isValidCheck([name, login], 'status'),
       { '{target_url}': target_url }
     );
   }
@@ -240,7 +265,7 @@ class Lightkeeper {
         title = 'Non-critical errors were found.';
         break;
       default:
-        title = 'All tests passed! Click Details to see the full report.';
+        title = 'All tests passed! See the full report. ➡️';
     }
 
     await this.status.run(
