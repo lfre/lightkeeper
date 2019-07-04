@@ -22,7 +22,7 @@ class Runner {
     let lhOptions = {};
 
     // If lighthouse options have been passed, override defaults
-    if (typeof config === 'string' && config) {
+    if (typeof config === 'string') {
       lhUrl = config;
     } else if (typeof config === 'object') {
       ({
@@ -44,18 +44,14 @@ class Runner {
     const { lhUrl, lhOptions } = this.parseConfig(config);
 
     this.options = lhOptions;
-    this.installationNode = installationNode;
+    this.installationNode = lhOptions.key || installationNode;
 
     /*
       If a custom lighthouse url was provided,
-      we use the installation `node_id` as auth.
+      we use the installation `node_id` as auth by default.
       This will be passed as an `Authorization` header.
       You can also find it using the Github API:
       https://developer.github.com/v3/apps/#get-an-installation
-
-      This is better than anything for the moment.
-      Suggestions welcome (without accessing user code).
-
       To "rotate" keys, uninstall and install the app again.
     */
     if (lhUrl && lhUrl !== lighthouseUrl) {
@@ -89,7 +85,7 @@ class Runner {
   /**
    * Sends a request to a Lighthouse endpoint
    * @param {string} url The url to test
-   * @param {object} budgets Performance budgets
+   * @param {array} budgets Performance budgets
    * @param {obbject} config Route LH config
    */
   async run(url, budgets, config) {
@@ -108,7 +104,7 @@ class Runner {
       }
     }
     // add performance-bugets
-    if (budgets) {
+    if (Array.isArray(budgets) && budgets.length) {
       const settings = { budgets };
       requestOptions.config = { ...(requestOptions.config && {}), settings };
     }

@@ -13,16 +13,15 @@ const chrome = require('chrome-aws-lambda');
 const puppeteer = require('puppeteer-core');
 const lighthouse = require('lighthouse');
 const { parse } = require('url');
-const { promisify } = require("util");
-const { gzip } = require("zlib");
 const { send } = require('micro');
 const defaultConfig = require('./default.json');
+
+const { log } = console;
 
 const {
   WEBHOOK_SECRET: secret,
   EXEC_PATH: execPath
 } = process.env;
-const compress = promisify(gzip);
 
 if (process.platform === 'darwin') {
   args = chrome.args.filter(a => a !== '--single-process');
@@ -50,7 +49,7 @@ const lh = async function (url, options = {}, config = {}, pupConfig = {}) {
     const { port } = parse(browser.wsEndpoint());
     return await lighthouse(url, { ...options,
       port,
-      output: "json",
+      output: "html",
       logLevel: "error"
     }, config);
   } finally {
@@ -146,14 +145,13 @@ module.exports = async (req, res) => {
 
   // Compile the scores
   const categories = Object.values(lhCategories).reduce((output, { id, title, score }) => {
-    score = score * 100;
-    output[id] = { score, title };
+    output[id] = { id, score, title };
     return output;
   }, {});
 
   const { details: { items: budgets = [] } = {} } = audits['performance-budget'];
 
-  const report = await compress(JSON.stringify(jsonReport), { level: 9 });
+  log(`Finished running Lighthouse test for: ${url}`);
 
-  send(res, 200, { categories, budgets, report });
+  send(res, 200, { categories, budgets });
 }

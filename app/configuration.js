@@ -46,6 +46,9 @@ class Configuration {
     })
   }
 
+  /**
+   * Gets and validates the configuration file
+   */
   async getConfiguration() {
     let configuration = {};
     let missingKeys = this.requiredKeys;
@@ -65,12 +68,12 @@ class Configuration {
     if (configuration) {
       missingKeys = missingKeys.filter(key => !(configuration[key] && typeof configuration[key] === 'string'));
       if (missingKeys.length) {
-        this.status.complete({
+        this.status.run({
           conclusion: 'action_required',
+          details_url: this.detailsUrl,
           output: {
             title: `Missing required keys or invalid types: ${missingKeys.join(',')}`,
-            summary: `More info at: ${this.detailsUrl}`,
-            details_url: this.detailsUrl
+            summary: `More info at: ${this.detailsUrl}`
           }
         });
         return {};
