@@ -27,7 +27,10 @@
     },
     {
       "src": "now/index.js",
-      "use": "@now/node"
+      "use": "@now/node",
+      "config": {
+        "maxLambdaSize": "100mb"
+      }
     }
   ],
   "routes": [

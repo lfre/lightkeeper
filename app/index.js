@@ -51,7 +51,7 @@ class Lightkeeper {
 
     const { number: pullNumber } = pull_requests[0];
 
-    this.run(
+    await this.run(
       context,
       null,
       { pullNumber, headBranch, headSha, installationNode },
@@ -63,7 +63,7 @@ class Lightkeeper {
    * Runs when a check is re-requested
    * @param {object} The github context
    */
-  onRequestedCheck(context) {
+  async onRequestedCheck(context) {
     const {
       check_run: {
         id: check_run_id,
@@ -80,7 +80,12 @@ class Lightkeeper {
     // Exit if this is not a Pull Request check
     const { number: pullNumber } = pull_requests[0];
     const checkRun = { check_run_id, details_url };
-    this.run(context, null, { pullNumber, headBranch, headSha, installationNode, checkRun }, true);
+    await this.run(
+      context,
+      null,
+      { pullNumber, headBranch, headSha, installationNode, checkRun },
+      true
+    );
   }
 
   /**
@@ -123,7 +128,7 @@ class Lightkeeper {
       })
     );
 
-    this.run(
+    await this.run(
       context,
       null,
       { pullNumber, headBranch, headSha, installationNode },
@@ -238,7 +243,7 @@ class Lightkeeper {
         title = 'All tests passed! Click Details to see the full report.';
     }
 
-    this.status.run(
+    await this.status.run(
       {
         conclusion: this.conclusion,
         check_run_id,
