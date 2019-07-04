@@ -29,7 +29,9 @@ async function getPullRequestNumber(github, headSha) {
   if (!items.length) return null;
 
   // find the pr number
-  const { number: pullNumber } = items.pop();
+  const { number: pullNumber, state } = items.pop();
+
+  if (state === 'closed') return null;
 
   return pullNumber;
 }
