@@ -73,13 +73,13 @@ function urlFormatter(baseUrl, macros = {}) {
  * Compares multiple names against the name provided in config
  * @param {array} namesToCheck The list of possible CI name
  */
-function isValidCheck(namesToCheck = []) {
+function isValidCheck(namesToCheck = [], typeCheck = 'check') {
   return (type, ciName) => {
     const valid = namesToCheck.filter(checkName => {
       return checkName.toLowerCase() === ciName;
     });
     // Return if this a different type or check
-    if (type !== 'check' || !valid.length) {
+    if (type !== typeCheck || !valid.length) {
       return false;
     }
     return true;

@@ -16,7 +16,6 @@ class Configuration {
   async getConfigFile() {
     const { context, github, headBranch: ref, pullNumber: pull_number } = this.params;
     const { owner, repo } = context.repo();
-
     const { data: prFiles } = await github.pullRequests.listFiles(context.repo({ pull_number }));
     const modifiedFiles = prFiles
       .filter(file => ['modified', 'added'].includes(file.status))

@@ -11,7 +11,7 @@ class Lightkeeper {
     this.logger = this.app.log.child({ name: appName });
     this.appParams = { appName };
     this.status = new Status(this.appParams);
-    this.conclusion = '';
+    this.conclusion = 'success';
     this.configuration = new Configuration(this.appParams, this.status);
     this.errorsFound = 0;
     this.order = [];
@@ -21,6 +21,7 @@ class Lightkeeper {
     // start listening for events
     this.app.on('check_run.completed', this.onCompletedCheck.bind(this));
     this.app.on('check_run.rerequested', this.onRequestedCheck.bind(this));
+    this.app.on('deployment_status', this.onDeployment.bind(this));
   }
 
   /**
@@ -80,6 +81,55 @@ class Lightkeeper {
     const { number: pullNumber } = pull_requests[0];
     const checkRun = { check_run_id, details_url };
     this.run(context, null, { pullNumber, headBranch, headSha, installationNode, checkRun }, true);
+  }
+
+  /**
+   * Runs tests when a Pull Request deployment is succesful
+   * @param {object} context The github context
+   */
+  async onDeployment(context) {
+    const {
+      deployment_status: {
+        state,
+        creator: { login },
+        target_url,
+        environment
+      },
+      deployment: { sha: headSha },
+      installation: { node_id: installationNode }
+    } = context.payload;
+
+    // skip for started or failed statuses
+    if (state !== 'success' || !headSha || environment !== 'staging') return;
+
+    const { data: { items = [] } = {} } = await context.github.search.issuesAndPullRequests({
+      q: `SHA=${headSha}`,
+      per_page: 1
+    });
+
+    if (!items.length) return;
+
+    // find the pr number
+    const { number: pullNumber } = items.pop();
+
+    // get the branch name
+    const {
+      data: {
+        head: { ref: headBranch }
+      }
+    } = await context.github.pullRequests.get(
+      context.repo({
+        pull_number: pullNumber
+      })
+    );
+
+    this.run(
+      context,
+      null,
+      { pullNumber, headBranch, headSha, installationNode },
+      isValidCheck([login], 'deployment'),
+      { '{target_url}': target_url }
+    );
   }
 
   /**
@@ -360,7 +410,7 @@ ${data.reportUrl ? `Full Report: ${data.reportUrl}` : ''}
       return `| ${title} | ${score} | ${target} | ${threshold} | ${pass} \n`;
     };
 
-    Object.values(response).forEach(({ id, sc, title }) => {
+    Object.values(response).forEach(({ id, score: sc, title }) => {
       const cat = filter[id];
       if (!cat) return;
       let target = 0;

@@ -21,7 +21,7 @@ class Runner {
     const { lhUrl, lhOptions } = parseConfig(config);
 
     this.options = lhOptions;
-    this.installationNode = lhOptions.key || installationNode;
+    this.installationNode = installationNode;
 
     /*
       If a custom lighthouse url was provided,
@@ -35,11 +35,11 @@ class Runner {
       this.lighthouseUrl = lhUrl;
       this.lighthouseAuth = this.installationNode;
     } else {
-      this.filterOptions();
+      this.options = this.filterOptions();
     }
 
-    if (!this.lighthouseUrl || !this.lighthouseAuth) {
-      throw new Error('The Lighthouse endpoint and auth token are required');
+    if (!this.lighthouseUrl) {
+      throw new Error('The Lighthouse endpoint is required');
     }
   }
 
@@ -47,16 +47,17 @@ class Runner {
    * Filters the request body if using the default LH endpoint.
    * This helps reduce body length and other shenanigans.
    */
-  filterOptions() {
+  filterOptions(source) {
+    const options = source || this.options;
     const keys = ['options', 'config', 'puppeteerConfig'];
     const validated = {};
     keys.forEach(key => {
-      const obj = this.options[key];
+      const obj = options[key];
       if (obj !== null && typeof obj === 'object' && Object.keys(obj).length) {
         validated[key] = obj;
       }
     });
-    this.options = validated;
+    return validated;
   }
 
   /**
@@ -78,8 +79,15 @@ class Runner {
       if (lhUrl && lhUrl !== lighthouseUrl) {
         endpointUrl = lhUrl;
         auth = this.installationNode;
+      } else {
+        requestOptions = this.filterOptions(requestOptions);
       }
     }
+    let headers = {
+      Authorization: auth
+    };
+    // attempt to get optional headers
+    ({ headers = headers, ...requestOptions } = requestOptions);
     // add performance-bugets
     if (Array.isArray(budgets) && budgets.length) {
       const settings = { budgets };
@@ -94,9 +102,7 @@ class Runner {
         url // this is the url to test
       },
       timeout: 60000,
-      headers: {
-        Authorization: auth
-      }
+      headers
     });
   }
 }
