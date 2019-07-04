@@ -1,8 +1,7 @@
 const axios = require('axios');
-const {
-  LIGHTHOUSE_URL: lighthouseUrl,
-  WEBHOOK_SECRET: secret,
-} = process.env;
+const { parseConfig } = require('./util');
+
+const { LIGHTHOUSE_URL: lighthouseUrl, WEBHOOK_SECRET: secret } = process.env;
 
 class Runner {
   constructor() {
@@ -13,35 +12,13 @@ class Runner {
   }
 
   /**
-   * Parses the global lighthouse options
-   *
-   * @param {object} config The lighthouse config
-   */
-  parseConfig(config = {}) {
-    let lhUrl;
-    let lhOptions = {};
-
-    // If lighthouse options have been passed, override defaults
-    if (typeof config === 'string') {
-      lhUrl = config;
-    } else if (typeof config === 'object') {
-      ({
-        url: lhUrl,
-        ...lhOptions
-      } = config);
-    }
-
-    return { lhUrl, lhOptions };
-  }
-
-  /**
    * Sets up the global lighthouse options
    * @param {object} config The global lighthouse config
    * @param {string} installationNode The installation node
    */
   setup(config = {}, installationNode) {
     // If lighthouse options have been passed, override defaults
-    const { lhUrl, lhOptions } = this.parseConfig(config);
+    const { lhUrl, lhOptions } = parseConfig(config);
 
     this.options = lhOptions;
     this.installationNode = lhOptions.key || installationNode;
@@ -61,7 +38,7 @@ class Runner {
       this.filterOptions();
     }
 
-    if (!this.lighthouseUrl || !this.lighthouseAuth){
+    if (!this.lighthouseUrl || !this.lighthouseAuth) {
       throw new Error('The Lighthouse endpoint and auth token are required');
     }
   }

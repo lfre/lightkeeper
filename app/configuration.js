@@ -1,7 +1,6 @@
 const { homepage } = require('../package.json');
-const {
-  CONFIG_FILE_PATH = '.github/lightkeeper.json',
-} = process.env;
+
+const { CONFIG_FILE_PATH = '.github/lightkeeper.json' } = process.env;
 
 class Configuration {
   constructor(params, status) {
@@ -15,20 +14,13 @@ class Configuration {
    * Gets the configuration file contents from the PR or base branch
    */
   async getConfigFile() {
-    const {
-      context,
-      github,
-      headBranch: ref,
-      pullNumber: pull_number
-    } = this.params;
+    const { context, github, headBranch: ref, pullNumber: pull_number } = this.params;
     const { owner, repo } = context.repo();
 
-    const { data: prFiles } = await github.pullRequests.listFiles(
-      context.repo({ pull_number })
-    );
+    const { data: prFiles } = await github.pullRequests.listFiles(context.repo({ pull_number }));
     const modifiedFiles = prFiles
       .filter(file => ['modified', 'added'].includes(file.status))
-      .map(file => file.filename)
+      .map(file => file.filename);
 
     // check if the PR has a modified configuration
     if (modifiedFiles.includes(CONFIG_FILE_PATH)) {
@@ -37,13 +29,13 @@ class Configuration {
         repo,
         path: CONFIG_FILE_PATH,
         ref
-      })
+      });
     }
     return github.repos.getContents({
       owner,
       repo,
       path: CONFIG_FILE_PATH
-    })
+    });
   }
 
   /**
@@ -53,7 +45,9 @@ class Configuration {
     let configuration = {};
     let missingKeys = this.requiredKeys;
     try {
-      const { data: { content } } = await this.getConfigFile();
+      const {
+        data: { content }
+      } = await this.getConfigFile();
       configuration = JSON.parse(Buffer.from(content, 'base64').toString());
     } catch (error) {
       // Exit early if config was not found
@@ -66,7 +60,9 @@ class Configuration {
     }
     // Check for required keys
     if (configuration) {
-      missingKeys = missingKeys.filter(key => !(configuration[key] && typeof configuration[key] === 'string'));
+      missingKeys = missingKeys.filter(
+        key => !(configuration[key] && typeof configuration[key] === 'string')
+      );
       if (missingKeys.length) {
         this.status.run({
           conclusion: 'action_required',

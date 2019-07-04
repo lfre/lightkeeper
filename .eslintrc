@@ -1,0 +1,15 @@
+{
+  "extends": [
+    "airbnb-base",
+    "prettier"
+  ],
+  "env": {
+    "node": true,
+    "es6": true
+  },
+  "rules": {
+    "no-bitwise": ["error", { "int32Hint": true }],
+    "camelcase": "off",
+    "no-param-reassign": "off"
+  }
+}

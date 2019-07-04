@@ -7,9 +7,23 @@
     "node": "10.x"
   },
   "scripts": {
+    "eslint-check": "eslint --print-config . | eslint-config-prettier-check",
     "dev": "nodemon",
     "start": "probot run ./index.js",
-    "test": "ava"
+    "test": "nyc --require esm ava",
+    "lint": "eslint app/**/*.js"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier-eslint --write",
+      "eslint",
+      "git add"
+    ]
   },
   "repository": {
     "type": "git",
@@ -34,7 +48,16 @@
   },
   "devDependencies": {
     "dotenv": "^8.0.0",
+    "eslint": "^6.0.1",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-config-prettier": "^6.0.0",
+    "eslint-plugin-import": "^2.18.0",
+    "husky": "^3.0.0",
+    "lint-staged": "^9.0.2",
     "nodemon": "^1.19.0",
+    "nyc": "^14.1.1",
+    "prettier-eslint": "^9.0.0",
+    "prettier-eslint-cli": "^5.0.0",
     "smee-client": "^1.1.0"
   },
   "nodemonConfig": {

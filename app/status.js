@@ -8,15 +8,14 @@ class Status {
    * @param {object} data The status options
    * @param {string} method The check method
    */
-  run(options = {}, method) {
+  run(options = {}, method = 'create') {
     const {
       appName: name,
       context,
       github,
       headBranch: head_branch,
-      headSha: head_sha,
+      headSha: head_sha
     } = this.params;
-    method = method || 'create';
 
     const params = {
       head_branch,
@@ -37,4 +36,4 @@ class Status {
   }
 }
 
-module.exports = Status
+module.exports = Status;

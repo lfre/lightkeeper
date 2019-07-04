@@ -1,52 +1,95 @@
+/* eslint-disable */
 const { join } = require('path');
 
-const mergeSettings = function (base, override) {
+function mergeSettings(base, override) {
   // budgets map, get keys, get obj from newbUDGETS, loop through keys, check in obj, do unionBy
 }
 
-const extendFromSettings = function(namedSettings) {
-  return function (extend, baseSettings, newSettings = {}) {
+function extendFromSettings(namedSettings) {
+  return function(extend, baseSettings, newSettings = {}) {
     // if true, merge new into base
     // if a string, get namedSetting
     // if namedSetting is true, merge namedSetting, into base, then newSettings into it.
     // else use namedSettings
     // if settings is a string, extend a shared setting
-  }
+  };
 }
 
 /**
  * Replaces dynamic values in urls
  * @param {object} keyMap The key/value macros
  */
-const replaceMacros = function (keyMap) {
+function replaceMacros(keyMap) {
   const regexKeys = Object.keys(keyMap);
-  regexKeys.push('{commit_hash:(\d)}');
+  regexKeys.push('{commit_hash:(d)}');
 
-  return (url) => {
+  return url => {
     const rgxp = new RegExp(regexKeys.join('|'), 'gi');
-    return url.replace(rgxp, function (matched, capture) {
+    return url.replace(rgxp, function replacer(matched, capture) {
       if (capture) {
         // forms the regular string
-        matched = `${matched.split(':').shift()}}`;
-        const replace = keyMap[matched];
+        const match = `${matched.split(':').shift()}}`;
+        const replace = keyMap[match];
         return replace.substr(0, +capture);
       }
       return keyMap[matched];
     });
-  }
+  };
 }
 
-const urlFormatter = (baseUrl, macros = {}) => {
-  const macroReplacer = replaceMacros(macros);
-  baseUrl = macroReplacer(baseUrl);
-  return (url) => {
-    if (!url || url === baseUrl) return baseUrl;
+/**
+ * Parses the global lighthouse options
+ *
+ * @param {object} config The lighthouse config
+ */
+function parseConfig(config = {}) {
+  let lhUrl;
+  let lhOptions = {};
 
-    if (url.startsWith('http')){
+  // If lighthouse options have been passed, override defaults
+  if (typeof config === 'string') {
+    lhUrl = config;
+  } else if (typeof config === 'object') {
+    ({ url: lhUrl, ...lhOptions } = config);
+  }
+
+  return { lhUrl, lhOptions };
+}
+
+function urlFormatter(baseUrl, macros = {}) {
+  const macroReplacer = replaceMacros(macros);
+  const base = macroReplacer(baseUrl);
+  return url => {
+    if (!url || url === base) return base;
+
+    if (url.startsWith('http')) {
       return macroReplacer(url);
     }
-    return macroReplacer(join(baseUrl, url));
-  }
+    return macroReplacer(join(base, url));
+  };
 }
 
-module.exports = { extendFromSettings, replaceMacros, urlFormatter }
+/**
+ * Compares multiple names against the name provided in config
+ * @param {array} namesToCheck The list of possible CI name
+ */
+function isValidCheck(namesToCheck = []) {
+  return (type, ciName) => {
+    const valid = namesToCheck.filter(checkName => {
+      return checkName.toLowerCase() === ciName;
+    });
+    // Return if this a different type or check
+    if (type !== 'check' || !valid.length) {
+      return false;
+    }
+    return true;
+  };
+}
+
+module.exports = {
+  extendFromSettings,
+  isValidCheck,
+  parseConfig,
+  replaceMacros,
+  urlFormatter
+};

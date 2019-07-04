@@ -4,11 +4,7 @@
 // https://github.com/alixaxel/chrome-aws-lambda/issues/37
 global.URL = require('url').URL;
 
-const {
-  createHmac,
-  pseudoRandomBytes,
-  timingSafeEqual
-} = require('crypto');
+const { createHmac, pseudoRandomBytes, timingSafeEqual } = require('crypto');
 const chrome = require('chrome-aws-lambda');
 const puppeteer = require('puppeteer-core');
 const lighthouse = require('lighthouse');
@@ -18,17 +14,16 @@ const defaultConfig = require('./default.json');
 
 const { log } = console;
 
-const {
-  WEBHOOK_SECRET: secret,
-  EXEC_PATH: execPath
-} = process.env;
+const { WEBHOOK_SECRET: secret, EXEC_PATH: execPath } = process.env;
+
+let args;
+let executablePath;
 
 if (process.platform === 'darwin') {
   args = chrome.args.filter(a => a !== '--single-process');
   executablePath = Promise.resolve(execPath);
 } else {
-  args = chrome.args;
-  executablePath = chrome.executablePath;
+  ({ args, executablePath } = chrome);
 }
 
 /**
@@ -38,20 +33,17 @@ if (process.platform === 'darwin') {
  * @param {object} config The lighthouse config
  * @param {object} pupConfig The puppeteer config
  */
-const lh = async function (url, options = {}, config = {}, pupConfig = {}) {
+async function lh(url, options = {}, config = {}, pupConfig = {}) {
   let browser;
 
   try {
-    browser = await puppeteer.launch({ ...pupConfig,
+    browser = await puppeteer.launch({
+      ...pupConfig,
       args,
       executablePath: await executablePath
     });
     const { port } = parse(browser.wsEndpoint());
-    return await lighthouse(url, { ...options,
-      port,
-      output: "html",
-      logLevel: "error"
-    }, config);
+    return await lighthouse(url, { ...options, port, output: 'html', logLevel: 'error' }, config);
   } finally {
     if (browser) {
       await browser.close();
@@ -64,17 +56,26 @@ const lh = async function (url, options = {}, config = {}, pupConfig = {}) {
  * @param {string} a Header
  * @param {string} b Value to compare
  */
-const timeSafeCompare = function (a, b) {
+function timeSafeCompare(a, b) {
   const sa = String(a);
   const sb = String(b);
   const key = pseudoRandomBytes(32);
-  const ah = createHmac('sha256', key).update(sa).digest();
-  const bh = createHmac('sha256', key).update(sb).digest();
+  const ah = createHmac('sha256', key)
+    .update(sa)
+    .digest();
+  const bh = createHmac('sha256', key)
+    .update(sb)
+    .digest();
 
   return timingSafeEqual(ah, bh) && a === b;
 }
 
-const json = async function jsonParse(req) {
+/**
+ * Parses the body data
+ * @param {object} req The request object
+ * @param {object} res The response oject
+ */
+async function json(req, res) {
   return new Promise(resolve => {
     let body = '';
 
@@ -103,13 +104,8 @@ module.exports = async (req, res) => {
     });
     return;
   }
-  // TODO: Switch to `json` from micro again when is fixed
-  const {
-      url,
-      options = {},
-      config = {},
-      puppeteerConfig = {}
-  } = await json(req);
+  // TODO: Switch to `json` from micro again when its fixed
+  const { url, options = {}, config = {}, puppeteerConfig = {} } = await json(req, res);
 
   if (!url) {
     send(res, 400, {
@@ -126,9 +122,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    result = await lh(
-      url, options, { ...defaultConfig, config }, puppeteerConfig
-    );
+    result = await lh(url, options, { ...defaultConfig, config }, puppeteerConfig);
   } catch (err) {
     error = err.friendlyMessage || err.message;
     send(res, error.code || 400, { error });
@@ -136,11 +130,8 @@ module.exports = async (req, res) => {
   }
 
   const {
-    lhr: {
-      categories: lhCategories,
-      audits
-    },
-    report: jsonReport
+    lhr: { categories: lhCategories, audits },
+    report // eslint-disable-line
   } = result;
 
   // Compile the scores
@@ -154,4 +145,4 @@ module.exports = async (req, res) => {
   log(`Finished running Lighthouse test for: ${url}`);
 
   send(res, 200, { categories, budgets });
-}
+};
