@@ -101,7 +101,7 @@ class Runner {
         ...requestOptions,
         url // this is the url to test
       },
-      timeout: 120000,
+      timeout: 60000,
       headers
     });
   }
