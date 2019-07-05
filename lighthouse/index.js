@@ -129,6 +129,8 @@ module.exports = async (req, res) => {
     return;
   }
 
+  log(`Started running Lighthouse tests for: ${url}`);
+
   const {
     lhr: { categories: lhCategories, audits },
     report // eslint-disable-line
