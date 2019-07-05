@@ -106,7 +106,11 @@ class Session {
         conclusion: 'failure',
         output: {
           title: 'Errors were found attempting to run the Lighthouse tests',
-          summary: err
+          summary: `
+            Attempted to run:
+
+            ${this.order.join('/n')}
+          `
         }
       });
       return;
