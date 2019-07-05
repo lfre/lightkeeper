@@ -104,7 +104,7 @@ module.exports = async (req, res) => {
     });
     return;
   }
-  // TODO: Switch to `json` from micro again when its fixed
+  // TODO: Switch to `req.body` when either Ligthouse work on now/node or raw node supports it.
   const { url, options = {}, config = {}, puppeteerConfig = {} } = await json(req, res);
 
   if (!url) {

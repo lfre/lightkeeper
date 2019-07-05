@@ -8,6 +8,8 @@ const { APP_NAME: appName = 'Lightkeeper' } = process.env;
 class Lightkeeper {
   constructor(app) {
     this.app = app;
+    // allow getting an initialized version of the app
+    app.appInstance = this;
     this.logger = this.app.log.child({ name: appName });
     this.appParams = { appName };
     this.status = new Status(this.appParams);

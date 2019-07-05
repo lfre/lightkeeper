@@ -1,15 +1,43 @@
 const { createProbot } = require('probot');
+const auth = require('../app/util/auth');
 
-const { APP_ID: id, PRIVATE_KEY: privateKey, WEBHOOK_SECRET: secret } = process.env;
+const { APP_ID: appId, PRIVATE_KEY: privateKey, WEBHOOK_SECRET: secret } = process.env;
 
 const buffer = Buffer.from(privateKey, 'base64');
 const cert = buffer.toString('ascii');
-const lightkeeper = require('..');
+const appSource = require('..');
 
-const serverless = app => {
-  const probot = createProbot({ id, cert, secret });
-  probot.load(app);
-  return probot.server;
+const serverless = appFunc => {
+  const probot = createProbot({ id: appId, cert, secret });
+  const probotApp = probot.load(appFunc);
+
+  return async (req, res) => {
+    // attempt to read body params
+    const { pr, config, macros = {}, repo: { name, owner: login } = {} } = req.body || {};
+    // If this is a manual request, authenticate
+    if (pr && name && login) {
+      const { appInstance: lightkeeper } = probotApp;
+      const pullNumber = +pr;
+      const { context, headBranch, headSha } = await auth(
+        probotApp,
+        pullNumber,
+        { login, name },
+        res
+      );
+      if (!context) return false;
+      try {
+        await lightkeeper.run(context, config, { pullNumber, headBranch, headSha }, true, macros);
+        return res.status(200).send('Process ran succesfully');
+      } catch (error) {
+        return res.status(400).send({
+          message: 'An error was found processing the request',
+          error
+        });
+      }
+    }
+    // process as github webhook reponse
+    return probot.server(req, res);
+  };
 };
 
-module.exports = serverless(lightkeeper);
+module.exports = serverless(appSource);
