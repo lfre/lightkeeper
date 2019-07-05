@@ -1,5 +1,5 @@
 const { createProbot } = require('probot');
-const auth = require('../app/util/auth');
+const auth = require('./util/auth');
 
 const { APP_ID: appId, PRIVATE_KEY: privateKey, WEBHOOK_SECRET: secret } = process.env;
 

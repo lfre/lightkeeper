@@ -28,6 +28,10 @@
     {
       "src": "now/index.js",
       "use": "@now/node"
+    },
+    {
+      "src": "now/run.js",
+      "use": "@now/node"
     }
   ],
   "routes": [
@@ -51,6 +55,13 @@
     {
       "src": "^/$",
       "dest": "now/index.js",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "src": "^/run(/)?",
+      "dest": "now/run.js",
       "methods": [
         "POST"
       ]
