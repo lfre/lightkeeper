@@ -12,7 +12,8 @@ const { parse } = require('url');
 const { send } = require('micro');
 const defaultConfig = require('./default.json');
 
-const { log } = console;
+const { log, time, timeEnd } = console;
+const label = 'Lighthouse';
 
 const { WEBHOOK_SECRET: secret, EXEC_PATH: execPath } = process.env;
 
@@ -121,15 +122,21 @@ module.exports = async (req, res) => {
     return;
   }
 
+  log(`Started running Lighthouse tests for: ${url}`);
+  time(label);
+
   try {
     result = await lh(url, options, { ...defaultConfig, config }, puppeteerConfig);
   } catch (err) {
     error = err.friendlyMessage || err.message;
     send(res, error.code || 400, { error });
+    log('There was a Lighthouse error', err);
+    timeEnd();
     return;
   }
 
-  log(`Started running Lighthouse tests for: ${url}`);
+  log(`Finished running Lighthouse test for: ${url}`);
+  timeEnd(label);
 
   const {
     lhr: { categories: lhCategories, audits },
@@ -143,8 +150,6 @@ module.exports = async (req, res) => {
   }, {});
 
   const { details: { items: budgets = [] } = {} } = audits['performance-budget'];
-
-  log(`Finished running Lighthouse test for: ${url}`);
 
   send(res, 200, { categories, budgets });
 };
