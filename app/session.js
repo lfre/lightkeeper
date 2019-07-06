@@ -1,33 +1,20 @@
 const Status = require('./status');
 const Configuration = require('./configuration');
+const processComment = require('./comments');
 const Runner = require('./runner'); // 🏃
-const { extendFromSettings, urlFormatter } = require('./util');
-
-function detailsSummary(
-  summary,
-  content,
-  { reportUrl, includeLineBreak = true, detailTag = '<details>' } = {}
-) {
-  const report = reportUrl ? `\n${reportUrl}\n` : '';
-  const linebreak = includeLineBreak === true ? `\n---\n` : '';
-  return `${detailTag}
-<summary>${summary}</summary>
-<br>
-
-${content}
-${report}
-</details>
-${linebreak}
-`;
-}
+const prepareReport = require('./report');
+const { detailsSummary, extendFromSettings, urlFormatter } = require('./util');
 
 class Session {
   constructor(appName, logger) {
     this.appParams = { appName };
     this.logger = logger;
     this.status = new Status(this.appParams);
-    this.conclusion = 'success';
     this.configuration = new Configuration(this.appParams, this.status);
+  }
+
+  setVariables() {
+    this.conclusion = 'success';
     this.errorsFound = 0;
     this.order = [];
     this.reports = new Map();
@@ -72,7 +59,8 @@ class Session {
 
     if (!baseUrl || !isValid) return;
 
-    // runner here
+    // prepare variables since it's valid run
+    this.setVariables();
 
     // Setup the runner, and exit if the url or token are empty
     try {
@@ -97,23 +85,26 @@ class Session {
             this.urlFormatter() // returns the formatted baseUrl
           ];
 
-    //  check run here
+    // stores curried function to update status
+    let status;
 
-    const {
-      data: { id: check_run_id, html_url: details_url }
-    } = await this.status.run(
-      {
-        status: 'in_progress',
-        output: {
-          title: `Attempting to run tests for ${urlRoutes.length} url${
-            urlRoutes.length > 1 ? 's' : ''
-          }`,
-          summary: 'This is in progress. Please do not re-run until it has finished.'
+    try {
+      status = await this.status.create(
+        {
+          output: {
+            title: `Attempting to run tests for ${urlRoutes.length} url${
+              urlRoutes.length > 1 ? 's' : ''
+            }`,
+            summary: 'This is in progress. Please do not re-run until it has finished.'
+          }
         },
-        ...checkRun
-      },
-      Object.keys(checkRun).length ? 'update' : undefined
-    );
+        checkRun
+      );
+      this.logger.info('Posted an `in_progress` check to Github');
+    } catch (err) {
+      this.logger.error('Failed to create `in_progress` status', err);
+      return;
+    }
 
     this.logger.info('Started processing URLs...');
 
@@ -127,116 +118,46 @@ class Session {
 
     this.logger.info('Finished processing URLs');
 
-    // comment here
-    // report here
-
-    let reportSummary = '';
-
-    const commentStats = {
-      '⬆️': {
-        body: '',
-        count: 0,
-        summary: '<b>Improvements: <i>{text}</i></b> 🚀',
-        options: {
-          detailTag: '<details open>'
-        }
-      },
-      '⚠️': { body: '', count: 0, summary: '<b>Warnings: <i>{text}</i></b>' },
-      '❌': { body: '', count: 0, summary: '<b>Errors: <i>{text}</i></b>' }
-    };
-
-    this.order.forEach(route => {
-      const result = this.reports.get(route);
-      if (!result) return;
-      const { stats = {}, report = '' } = result;
-      reportSummary += report;
-      Object.entries(stats).forEach(([icon, { output = '' }]) => {
-        const globalStat = commentStats[icon];
-        if (!globalStat) return;
-        globalStat.count += 1;
-        globalStat.body += output;
-      });
-    });
+    const { reportSummary = '', commentSummary = '', getTitle } = prepareReport(
+      this.order,
+      this.reports
+    );
 
     if (!reportSummary) {
       this.logger.error('Tests came out with empty reports', this.order.join('\n'));
-      await this.status.run(
-        {
-          status: 'completed',
-          check_run_id,
-          details_url,
-          conclusion: 'neutral',
-          output: {
-            title: 'The tests did not generate any reports',
-            summary: `<b>Ran tests for the following URLs:</b>\n${this.order.join('/n')}`
-          }
-        },
-        'update'
-      );
+      await status({
+        status: 'completed',
+        conclusion: 'neutral',
+        output: {
+          title: 'The tests did not generate any reports',
+          summary: `<b>Ran tests for the following URLs:</b>\n${this.order.join('/n')}`
+        }
+      });
       return;
     }
 
-    let title = '';
-    const urlText = `${this.order.length} URL${this.order.length > 1 ? 's' : ''}`;
-    const errorsFound = `${this.errorsFound} error${this.errorsFound > 1 ? 's' : ''}`;
-    switch (this.conclusion) {
-      case 'failure':
-        title = `Found ${errorsFound} across ${urlText}.`;
-        break;
-      case 'neutral':
-        title = 'Non-critical errors were found.';
-        break;
-      default:
-        title = 'All tests passed! See the full report. ➡️';
-    }
+    this.logger.info('PULL_NUMBER', pullNumber);
 
+    // Attempt to post check and comment to Github
     try {
-      await this.status.run(
-        {
+      await Promise.all([
+        // github check
+        status({
           conclusion: this.conclusion,
-          check_run_id,
-          details_url,
           output: {
-            title,
+            title: getTitle(this.conclusion, this.errorsFound),
             summary: reportSummary
           }
-        },
-        'update'
-      );
-      this.logger.info('Sucessfully posted a check run on PR');
+        }),
+        // comment
+        processComment(context, pullNumber, commentSummary)
+      ]);
     } catch (err) {
-      this.logger.error('Failed to post status to Github', err);
+      this.logger.error('Failed to post to Github', err);
+      return;
     }
 
-    const commentBody = Object.values(this.commentStats).reduce(
-      (output, { summary, body, count, options = {} }) => {
-        if (!body) return output;
-        const text = `${count} URL${count > 1 ? 's' : ''}`;
-        output += detailsSummary(summary.replace('{text}', text), body, {
-          includeLineBreak: false,
-          ...options
-        });
-        return output;
-      },
-      `# 🚢 Lightkeeper Report\n`
-    );
-
-    /* const response = await context.github.issues.listComments(context.repo({
-      pull_number: pullNumber
-    })); */
-
-    try {
-      // await postComment(context, pullNumber, commentStats);
-      await context.github.issues.createComment(
-        context.repo({
-          issue_number: pullNumber,
-          body: commentBody
-        })
-      );
-      this.logger.info('Sucessfully posted a comment');
-    } catch (err) {
-      this.logger.error('Failed to post comment', err);
-    }
+    this.logger.info('Sucessfully posted to Github');
   }
 
   /**

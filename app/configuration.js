@@ -6,7 +6,7 @@ class Configuration {
   constructor(params, status) {
     this.params = params;
     this.status = status;
-    this.detailsUrl = `${homepage}/docs#configuration`;
+    this.detailsUrl = `${homepage}/#configuration`;
     this.requiredKeys = ['baseUrl', 'ci'];
   }
 

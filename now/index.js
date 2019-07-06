@@ -5,7 +5,7 @@ const { APP_ID: appId, PRIVATE_KEY: privateKey, WEBHOOK_SECRET: secret } = proce
 
 const buffer = Buffer.from(privateKey, 'base64');
 const cert = buffer.toString('ascii');
-const appSource = require('..');
+const appSource = require('../app/');
 
 const serverless = appFunc => {
   const probot = createProbot({ id: appId, cert, secret });

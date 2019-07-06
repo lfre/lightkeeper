@@ -5,6 +5,30 @@ function mergeSettings(base, override) {
   // budgets map, get keys, get obj from newbUDGETS, loop through keys, check in obj, do unionBy
 }
 
+/**
+ *
+ * @param {string} summary The dropdown summary
+ * @param {string} content The content of the dropdown
+ * @param {object} settings Optional settings
+ */
+function detailsSummary(
+  summary,
+  content,
+  { reportUrl, includeLineBreak = true, detailTag = '<details>' } = {}
+) {
+  const report = reportUrl ? `\n${reportUrl}\n` : '';
+  const linebreak = includeLineBreak === true ? `\n---\n` : '';
+  return `${detailTag}
+<summary>${summary}</summary>
+<br>
+
+${content}
+${report}
+</details>
+${linebreak}
+`;
+}
+
 function extendFromSettings(namedSettings) {
   return function(extend, baseSettings, newSettings = {}) {
     // if true, merge new into base
@@ -112,6 +136,7 @@ function urlFormatter(baseUrl, macros = {}) {
 }
 
 module.exports = {
+  detailsSummary,
   extendFromSettings,
   getPullRequestNumber,
   isValidCheck,

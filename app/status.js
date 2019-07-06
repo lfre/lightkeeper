@@ -4,6 +4,35 @@ class Status {
   }
 
   /**
+   * Creates a status run, and returns a function for updating it
+   * @param {object} params The status parameters
+   * @param {object} checkRun A previous optional check-run e.g re-request
+   */
+  async create(params, checkRun = {}) {
+    const {
+      data: { id: check_run_id, html_url: details_url }
+    } = await this.run(
+      {
+        status: 'in_progress',
+        ...params,
+        ...checkRun
+      },
+      Object.keys(checkRun).length ? 'update' : undefined
+    );
+
+    return async runParams => {
+      await this.run(
+        {
+          ...runParams,
+          check_run_id,
+          details_url
+        },
+        'update'
+      );
+    };
+  }
+
+  /**
    * Adds/updates a check run.
    * @param {object} data The status options
    * @param {string} method The check method

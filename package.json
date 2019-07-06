@@ -2,14 +2,14 @@
   "name": "lightkeeper",
   "version": "1.0.0",
   "description": "Github App to run Lighthouse tests in CI",
-  "main": "index.js",
+  "main": "app/index.js",
   "engines": {
     "node": "10.x"
   },
   "scripts": {
     "eslint-check": "eslint --print-config . | eslint-config-prettier-check",
     "dev": "nodemon",
-    "start": "probot run ./index.js",
+    "start": "probot run ./app/index.js",
     "test": "nyc --require esm ava",
     "lint": "eslint app/**/*.js"
   },
@@ -41,7 +41,7 @@
   "bugs": {
     "url": "https://github.com/lfre/lightkeeper/issues"
   },
-  "homepage": "https://lightkeeper.dev",
+  "homepage": "https://github.com/lfre/lightkeeper",
   "dependencies": {
     "axios": "^0.19.0",
     "probot": "^9.2.11"
