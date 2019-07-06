@@ -1,5 +1,5 @@
 /* eslint-disable */
-const { join } = require('path');
+const { resolve } = require('url');
 
 function mergeSettings(base, override) {
   // budgets map, get keys, get obj from newbUDGETS, loop through keys, check in obj, do unionBy
@@ -107,7 +107,7 @@ function urlFormatter(baseUrl, macros = {}) {
     if (url.startsWith('http')) {
       return new URL(macroReplacer(url)).href;
     }
-    return macroReplacer(join(base, url));
+    return macroReplacer(resolve(base, url));
   };
 }
 

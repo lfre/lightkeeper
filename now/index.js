@@ -16,7 +16,7 @@ const serverless = appFunc => {
     const { pr, config, macros = {}, repo: { name, owner: login } = {} } = req.body || {};
     // If this is a manual request, authenticate
     if (pr && name && login) {
-      const { appInstance: lightkeeper } = probotApp;
+      const { runLightkeeper } = probotApp;
       const pullNumber = +pr;
       const { context, headBranch, headSha } = await auth(
         probotApp,
@@ -26,7 +26,7 @@ const serverless = appFunc => {
       );
       if (!context) return false;
       try {
-        await lightkeeper.run(context, config, { pullNumber, headBranch, headSha }, true, macros);
+        await runLightkeeper(context, config, { pullNumber, headBranch, headSha }, true, macros);
         return res.status(200).send('Process ran succesfully');
       } catch (error) {
         return res.status(400).send({

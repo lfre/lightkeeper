@@ -1,3 +1,3 @@
 const Lightkeeper = require('./app');
 
-module.exports = app => new Lightkeeper(app);
+module.exports = Lightkeeper;

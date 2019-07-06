@@ -3,6 +3,24 @@ const Configuration = require('./configuration');
 const Runner = require('./runner'); // 🏃
 const { extendFromSettings, urlFormatter } = require('./util');
 
+function detailsSummary(
+  summary,
+  content,
+  { reportUrl, includeLineBreak = true, detailTag = '<details>' } = {}
+) {
+  const report = reportUrl ? `\n${reportUrl}\n` : '';
+  const linebreak = includeLineBreak === true ? `\n---\n` : '';
+  return `${detailTag}
+<summary>${summary}</summary>
+<br>
+
+${content}
+${report}
+</details>
+${linebreak}
+`;
+}
+
 class Session {
   constructor(appName, logger) {
     this.appParams = { appName };
@@ -14,7 +32,6 @@ class Session {
     this.order = [];
     this.reports = new Map();
     this.runner = new Runner();
-    this.stats = {};
     this.urlFormatter = null;
   }
 
@@ -55,11 +72,13 @@ class Session {
 
     if (!baseUrl || !isValid) return;
 
+    // runner here
+
     // Setup the runner, and exit if the url or token are empty
     try {
       this.runner.setup(lhConfig, installationNode);
     } catch (err) {
-      this.logger.error(err);
+      this.logger.error('Runner setup failed', err);
       return;
     }
     // set up the url formatter
@@ -78,36 +97,9 @@ class Session {
             this.urlFormatter() // returns the formatted baseUrl
           ];
 
-    urlRoutes.push('https://foobar');
+    //  check run here
 
-    // attempt to get an already available check run
     const {
-      data: { check_runs: checkRuns = [] }
-    } = await context.github.checks.listForRef(
-      context.repo({
-        ref: headSha
-      })
-    );
-
-    let check_run_id;
-    let details_url;
-
-    if (!Object.keys(checkRun).length) {
-      checkRuns.some(({ id, details_url: detail, name }) => {
-        if (name === this.appParams.appName) {
-          check_run_id = id;
-          details_url = detail;
-          return true;
-        }
-        return false;
-      });
-      Object.assign(checkRun, {
-        check_run_id,
-        details_url
-      });
-    }
-
-    ({
       data: { id: check_run_id, html_url: details_url }
     } = await this.status.run(
       {
@@ -121,7 +113,9 @@ class Session {
         ...checkRun
       },
       Object.keys(checkRun).length ? 'update' : undefined
-    ));
+    );
+
+    this.logger.info('Started processing URLs...');
 
     // Process each route and send a request
     await Promise.all(
@@ -131,15 +125,41 @@ class Session {
       })
     );
 
-    let summary = '';
+    this.logger.info('Finished processing URLs');
+
+    // comment here
+    // report here
+
+    let reportSummary = '';
+
+    const commentStats = {
+      '⬆️': {
+        body: '',
+        count: 0,
+        summary: '<b>Improvements: <i>{text}</i></b> 🚀',
+        options: {
+          detailTag: '<details open>'
+        }
+      },
+      '⚠️': { body: '', count: 0, summary: '<b>Warnings: <i>{text}</i></b>' },
+      '❌': { body: '', count: 0, summary: '<b>Errors: <i>{text}</i></b>' }
+    };
 
     this.order.forEach(route => {
       const result = this.reports.get(route);
       if (!result) return;
-      summary += result.report;
+      const { stats = {}, report = '' } = result;
+      reportSummary += report;
+      Object.entries(stats).forEach(([icon, { output = '' }]) => {
+        const globalStat = commentStats[icon];
+        if (!globalStat) return;
+        globalStat.count += 1;
+        globalStat.body += output;
+      });
     });
 
-    if (!summary) {
+    if (!reportSummary) {
+      this.logger.error('Tests came out with empty reports', this.order.join('\n'));
       await this.status.run(
         {
           status: 'completed',
@@ -148,11 +168,7 @@ class Session {
           conclusion: 'neutral',
           output: {
             title: 'The tests did not generate any reports',
-            summary: `
-            Ran tests for the following URLs:
-
-            ${this.order.join('/n')}
-          `
+            summary: `<b>Ran tests for the following URLs:</b>\n${this.order.join('/n')}`
           }
         },
         'update'
@@ -161,12 +177,11 @@ class Session {
     }
 
     let title = '';
-
+    const urlText = `${this.order.length} URL${this.order.length > 1 ? 's' : ''}`;
+    const errorsFound = `${this.errorsFound} error${this.errorsFound > 1 ? 's' : ''}`;
     switch (this.conclusion) {
       case 'failure':
-        title = `Found ${this.errorsFound} error${this.errorsFound > 1 ? 's' : ''} across ${
-          this.order.length
-        } url${this.order.length > 1 ? 's' : ''}.`;
+        title = `Found ${errorsFound} across ${urlText}.`;
         break;
       case 'neutral':
         title = 'Non-critical errors were found.';
@@ -175,18 +190,53 @@ class Session {
         title = 'All tests passed! See the full report. ➡️';
     }
 
-    await this.status.run(
-      {
-        conclusion: this.conclusion,
-        check_run_id,
-        details_url,
-        output: {
-          title,
-          summary
-        }
+    try {
+      await this.status.run(
+        {
+          conclusion: this.conclusion,
+          check_run_id,
+          details_url,
+          output: {
+            title,
+            summary: reportSummary
+          }
+        },
+        'update'
+      );
+      this.logger.info('Sucessfully posted a check run on PR');
+    } catch (err) {
+      this.logger.error('Failed to post status to Github', err);
+    }
+
+    const commentBody = Object.values(this.commentStats).reduce(
+      (output, { summary, body, count, options = {} }) => {
+        if (!body) return output;
+        const text = `${count} URL${count > 1 ? 's' : ''}`;
+        output += detailsSummary(summary.replace('{text}', text), body, {
+          includeLineBreak: false,
+          ...options
+        });
+        return output;
       },
-      'update'
+      `# 🚢 Lightkeeper Report\n`
     );
+
+    /* const response = await context.github.issues.listComments(context.repo({
+      pull_number: pullNumber
+    })); */
+
+    try {
+      // await postComment(context, pullNumber, commentStats);
+      await context.github.issues.createComment(
+        context.repo({
+          issue_number: pullNumber,
+          body: commentBody
+        })
+      );
+      this.logger.info('Sucessfully posted a comment');
+    } catch (err) {
+      this.logger.error('Failed to post comment', err);
+    }
   }
 
   /**
@@ -217,6 +267,14 @@ class Session {
         urlRoute = this.processRouteSettings(route, settings, extendSettings);
       } catch (err) {
         this.logger.error('There was an error processing the route settings', err);
+        // push route, and add route to report
+        this.order.push(route);
+        this.reports.set(route, {
+          report: detailsSummary(
+            `<b>There was an error processing —</b> <i>${route}</i>`,
+            'Please check your configuration values'
+          )
+        });
         return;
       }
 
@@ -226,16 +284,22 @@ class Session {
         return;
       }
 
+      this.order.push(urlRoute);
+
       const { categories, budgets, lighthouse, reportOnly } = settings;
 
       // Skip if no thresholds or budgets have been passed
       // Kinda defeats the purpose of the tool
       if (!categories && !budgets) {
         this.logger.error('No budgets were found in config');
+        this.reports.set(urlRoute, {
+          report: detailsSummary(
+            `<b>No budgets were found in config for —</b> <i>${urlRoute}</i>`,
+            'Please include categories or budgets in settings'
+          )
+        });
         return;
       }
-
-      this.order.push(urlRoute);
 
       let data;
       try {
@@ -250,31 +314,26 @@ class Session {
         } = error;
         this.logger.error('Lighthouse request failed:', errorMessage);
         this.reports.set(urlRoute, {
-          report: `<details>
-<summary>Lighthouse request failed on — <i>${urlRoute}</i></summary>
-
-\`\`\`
-${errorMessage}
-\`\`\`
-
-</details>`,
-          error
+          report: detailsSummary(
+            `<b>Lighthouse request failed on —</b> <i>${urlRoute}</i>`,
+            `\`\`\`\n${errorMessage}\n\`\`\`\n`
+          )
         });
         return;
       }
 
-      // store changes and stats
-      const stats = {};
-      const changes = {
-        improvements: [],
-        warnings: [],
-        errors: []
+      // store the stats
+      const stats = {
+        '⬆️': { total: 0, output: '' },
+        '✅': { total: 0, output: '' },
+        '⚠️': { total: 0, output: '' },
+        '❌': { total: 0, output: '' }
       };
 
       const categoriesOutput = this.processCategories(
         data.categories,
         categories,
-        { changes, stats },
+        stats,
         reportOnly
       );
 
@@ -283,28 +342,29 @@ ${errorMessage}
       // if true, use response
       // if reportOnly false check improvements, or errors
 
-      const statsReport = Object.entries(stats).reduce((output, [icon, value]) => {
-        output += ` <b>${value}</b> ${icon}`;
-        return output;
-      }, '');
+      const statsReport = Object.entries(stats).reduce(
+        (statsSummary, [icon, { total, output }]) => {
+          const iconSummary = ` <b>${total}</b> ${icon}`;
+          if (total > 0) {
+            statsSummary += iconSummary;
+          }
+          if (!output) return statsSummary;
+          stats[icon].output = detailsSummary(
+            `<b>URL - </b><i>${urlRoute}</i><p>&nbsp; &nbsp; <b>Summary — ${iconSummary}`,
+            output
+          );
+          return statsSummary;
+        },
+        ''
+      );
 
-      const report = `<details>
-<summary><b>URL — </b><i>${urlRoute}</i><br>
-<p>&nbsp; &nbsp; <b>Summary — </b> ${statsReport}</summary>
-</p>
-<br>
-
-${categoriesOutput}
-
-<br>
-${data.reportUrl ? `Full Report: ${data.reportUrl}` : ''}
-</details>
-
----
-
-`;
+      const report = detailsSummary(
+        `<b>URL — </b><i>${urlRoute}</i><p>&nbsp; &nbsp; <b>Summary — </b> ${statsReport}`,
+        categoriesOutput,
+        data.reportUrl ? `Full Report: ${data.reportUrl}` : ''
+      );
       // add to report
-      this.reports.set(urlRoute, { report, changes, stats });
+      this.reports.set(urlRoute, { report, stats });
     };
   }
 
@@ -348,16 +408,19 @@ ${data.reportUrl ? `Full Report: ${data.reportUrl}` : ''}
    * Compares the response scores with the budgets
    * @param {object} response The response object
    * @param {object} filter The budgets object
-   * @param {object} param2 The options
+   * @param {object} stats The tally of errors, warnings and improvements
    * @param {boolean} reportOnly The report setting
    */
-  processCategories(response, filter, { stats }, reportOnly) {
+  processCategories(response, filter, stats, reportOnly) {
     if (!response) return false;
     const header = `| Category | Score | Threshold | Target | Pass |
 | -------- | ----- | ------ | ------ | ------ |`;
     let output = '';
+    let hasHeader = false;
     const addRow = (title, score, threshold, target, pass) => {
-      return `| ${title} | ${score} | ${threshold} | ${target} | ${pass} \n`;
+      return `| ${title} | ${score} | ${
+        threshold === target ? '—' : threshold
+      } | ${target} | ${pass} \n`;
     };
 
     Object.values(response).forEach(({ id, score: sc, title }) => {
@@ -371,14 +434,19 @@ ${data.reportUrl ? `Full Report: ${data.reportUrl}` : ''}
         target = cat;
       }
       if (typeof cat === 'object') {
-        ({ target, warning, threshold } = cat);
+        ({ target = 0, warning, threshold = 0 } = cat);
       }
       if (typeof warning !== 'number') {
         // set warning by default to 25% of threshold
         warning = Math.round((25 / 100) * threshold);
       }
       const score = sc * 100;
+      if (!target || typeof target !== 'number') return;
+
       const thresholdTarget = target - threshold;
+
+      if (thresholdTarget < 0) return;
+
       if (score < thresholdTarget) {
         pass = '❌';
         this.errorsFound += 1;
@@ -397,13 +465,15 @@ ${data.reportUrl ? `Full Report: ${data.reportUrl}` : ''}
         // add to warning changes
       } else if (score > target) {
         // add to improvements on changes
-        pass += '⬆️';
+        pass = '⬆️';
       }
-      output += addRow(title, score, thresholdTarget, target, pass);
-      if (!stats[pass]) {
-        stats[pass] = 0;
-      }
-      stats[pass] += 1;
+      const row = addRow(title, score, thresholdTarget, target, pass);
+      const stat = stats[pass] || {};
+      stat.total += 1;
+      stat.output += hasHeader ? row : `${header}\n${row}`;
+      hasHeader = true;
+      // add row to general output
+      output += row;
     });
 
     return `${header}\n${output}`;
