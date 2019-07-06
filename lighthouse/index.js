@@ -130,8 +130,8 @@ module.exports = async (req, res) => {
   } catch (err) {
     error = err.friendlyMessage || err.message;
     send(res, error.code || 400, { error });
-    log('There was a Lighthouse error', err);
-    timeEnd();
+    log('There was a Lighthouse error:', error);
+    timeEnd(label);
     return;
   }
 

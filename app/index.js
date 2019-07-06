@@ -162,7 +162,7 @@ class Lightkeeper {
    * @param {object} macros An optional macro config
    */
   async run(...args) {
-    const session = new Session(this.appName);
+    const session = new Session(this.appName, this.logger);
     await session.start(...args);
   }
 }

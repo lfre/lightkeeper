@@ -4,8 +4,9 @@ const Runner = require('./runner'); // 🏃
 const { extendFromSettings, urlFormatter } = require('./util');
 
 class Session {
-  constructor(appName) {
+  constructor(appName, logger) {
     this.appParams = { appName };
+    this.logger = logger;
     this.status = new Status(this.appParams);
     this.conclusion = 'success';
     this.configuration = new Configuration(this.appParams, this.status);
@@ -13,6 +14,7 @@ class Session {
     this.order = [];
     this.reports = new Map();
     this.runner = new Runner();
+    this.stats = {};
     this.urlFormatter = null;
   }
 
@@ -76,7 +78,36 @@ class Session {
             this.urlFormatter() // returns the formatted baseUrl
           ];
 
+    urlRoutes.push('https://foobar');
+
+    // attempt to get an already available check run
     const {
+      data: { check_runs: checkRuns = [] }
+    } = await context.github.checks.listForRef(
+      context.repo({
+        ref: headSha
+      })
+    );
+
+    let check_run_id;
+    let details_url;
+
+    if (!Object.keys(checkRun).length) {
+      checkRuns.some(({ id, details_url: detail, name }) => {
+        if (name === this.appParams.appName) {
+          check_run_id = id;
+          details_url = detail;
+          return true;
+        }
+        return false;
+      });
+      Object.assign(checkRun, {
+        check_run_id,
+        details_url
+      });
+    }
+
+    ({
       data: { id: check_run_id, html_url: details_url }
     } = await this.status.run(
       {
@@ -85,36 +116,20 @@ class Session {
           title: `Attempting to run tests for ${urlRoutes.length} url${
             urlRoutes.length > 1 ? 's' : ''
           }`,
-          summary: ''
+          summary: 'This is in progress. Please do not re-run until it has finished.'
         },
         ...checkRun
       },
       Object.keys(checkRun).length ? 'update' : undefined
-    );
+    ));
 
     // Process each route and send a request
-    try {
-      await Promise.all(
-        this.processRoutes(urlRoutes, {
-          settings,
-          namedSettings
-        })
-      );
-    } catch (err) {
-      await this.status.run({
-        status: 'completed',
-        conclusion: 'failure',
-        output: {
-          title: 'Errors were found attempting to run the Lighthouse tests',
-          summary: `
-            Attempted to run:
-
-            ${this.order.join('/n')}
-          `
-        }
-      });
-      return;
-    }
+    await Promise.all(
+      this.processRoutes(urlRoutes, {
+        settings,
+        namedSettings
+      })
+    );
 
     let summary = '';
 
@@ -125,14 +140,23 @@ class Session {
     });
 
     if (!summary) {
-      await this.status.run({
-        status: 'completed',
-        conclusion: 'failure',
-        output: {
-          title: 'Tests were succesful but did not generate any reports',
-          summary: ''
-        }
-      });
+      await this.status.run(
+        {
+          status: 'completed',
+          check_run_id,
+          details_url,
+          conclusion: 'neutral',
+          output: {
+            title: 'The tests did not generate any reports',
+            summary: `
+            Ran tests for the following URLs:
+
+            ${this.order.join('/n')}
+          `
+          }
+        },
+        'update'
+      );
       return;
     }
 
@@ -217,10 +241,23 @@ class Session {
       try {
         ({ data } = await this.runner.run(urlRoute, budgets, lighthouse));
       } catch (error) {
-        this.logger.error('Lighthouse request failed', error);
-        this.report.set(urlRoute, {
-          report: `Lighthouse request failed on ${urlRoute}:\n${error.error ||
-            error.message}\n---\n`,
+        const {
+          response: {
+            data: {
+              error: errorMessage = 'Add an error message from your Lighthouse endpoint.'
+            } = {}
+          } = {}
+        } = error;
+        this.logger.error('Lighthouse request failed:', errorMessage);
+        this.reports.set(urlRoute, {
+          report: `<details>
+<summary>Lighthouse request failed on — <i>${urlRoute}</i></summary>
+
+\`\`\`
+${errorMessage}
+\`\`\`
+
+</details>`,
           error
         });
         return;
@@ -252,7 +289,7 @@ class Session {
       }, '');
 
       const report = `<details>
-<summary><b>URL — </b><i>${route}</i><br>
+<summary><b>URL — </b><i>${urlRoute}</i><br>
 <p>&nbsp; &nbsp; <b>Summary — </b> ${statsReport}</summary>
 </p>
 <br>
@@ -267,7 +304,7 @@ ${data.reportUrl ? `Full Report: ${data.reportUrl}` : ''}
 
 `;
       // add to report
-      this.reports.set(route, { report, changes, stats });
+      this.reports.set(urlRoute, { report, changes, stats });
     };
   }
 
@@ -316,11 +353,11 @@ ${data.reportUrl ? `Full Report: ${data.reportUrl}` : ''}
    */
   processCategories(response, filter, { stats }, reportOnly) {
     if (!response) return false;
-    const header = `| Category | Score | Threshold | Pass |
-| -------- | ----- | ------ | ------ |`;
+    const header = `| Category | Score | Threshold | Target | Pass |
+| -------- | ----- | ------ | ------ | ------ |`;
     let output = '';
-    const addRow = (title, score, target, threshold, pass) => {
-      return `| ${title} | ${score} | ${target} | ${threshold} | ${pass} \n`;
+    const addRow = (title, score, threshold, target, pass) => {
+      return `| ${title} | ${score} | ${threshold} | ${target} | ${pass} \n`;
     };
 
     Object.values(response).forEach(({ id, score: sc, title }) => {
@@ -328,12 +365,17 @@ ${data.reportUrl ? `Full Report: ${data.reportUrl}` : ''}
       if (!cat) return;
       let target = 0;
       let threshold = 0;
+      let warning = null;
       let pass = '✅';
       if (typeof cat === 'number') {
         target = cat;
       }
       if (typeof cat === 'object') {
-        ({ target, threshold } = cat);
+        ({ target, warning, threshold } = cat);
+      }
+      if (typeof warning !== 'number') {
+        // set warning by default to 25% of threshold
+        warning = Math.round((25 / 100) * threshold);
       }
       const score = sc * 100;
       const thresholdTarget = target - threshold;
@@ -350,13 +392,14 @@ ${data.reportUrl ? `Full Report: ${data.reportUrl}` : ''}
           this.conclusion = 'failure';
         }
         // add to error changes
-      } else if (threshold && score === thresholdTarget) {
+      } else if (threshold && score <= thresholdTarget + warning) {
         pass = '⚠️';
         // add to warning changes
       } else if (score > target) {
         // add to improvements on changes
+        pass += '⬆️';
       }
-      output += addRow(title, score, thresholdTarget, pass);
+      output += addRow(title, score, thresholdTarget, target, pass);
       if (!stats[pass]) {
         stats[pass] = 0;
       }

@@ -100,12 +100,12 @@ function parseConfig(config = {}) {
 
 function urlFormatter(baseUrl, macros = {}) {
   const macroReplacer = replaceMacros(macros);
-  const base = macroReplacer(baseUrl);
+  const base = new URL(macroReplacer(baseUrl)).href;
   return url => {
     if (!url || url === base) return base;
 
     if (url.startsWith('http')) {
-      return macroReplacer(url);
+      return new URL(macroReplacer(url)).href;
     }
     return macroReplacer(join(base, url));
   };
