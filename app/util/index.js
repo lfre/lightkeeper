@@ -68,10 +68,10 @@ async function getPullRequestNumber(github, headSha) {
  */
 function isValidCheck(namesToCheck = [], typeCheck = 'check', checkFunction) {
   const checker = typeof checkFunction === 'function' ? checkFunction : false;
-  return (type, ciName) => {
+  return (type, ciNames) => {
     const valid = namesToCheck.filter(checkName => {
       const nameToCheck = checkName.toLowerCase();
-      return checker ? checker(nameToCheck, ciName) : nameToCheck === ciName;
+      return checker ? checker(nameToCheck, ciNames) : ciNames.includes(nameToCheck);
     });
     // Return if this a different type or check
     if (type !== typeCheck || !valid.length) {

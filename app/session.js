@@ -45,7 +45,6 @@ class Session {
       baseUrl,
       ci: ciName,
       type = 'check',
-      lighthouse: lhConfig,
       routes = [],
       settings = {},
       namedSettings = {}
@@ -54,7 +53,8 @@ class Session {
     // return early if the config targets a different type
     // this allows targeting deployments, or older `status` workflows.
     if (typeof isValid === 'function') {
-      isValid = await isValid(type, ciName);
+      const ciAppName = ciName.toLowerCase();
+      isValid = await isValid(type, [ciAppName, `${ciAppName}[bot]`]);
     }
 
     if (!baseUrl || !isValid) return;
@@ -64,7 +64,7 @@ class Session {
 
     // Setup the runner, and exit if the url or token are empty
     try {
-      this.runner.setup(lhConfig, installationNode);
+      this.runner.setup(settings.lighthouse, installationNode);
     } catch (err) {
       this.logger.error('Runner setup failed', err);
       return;
