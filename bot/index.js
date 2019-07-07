@@ -22,7 +22,7 @@ const {
   string: ['repo', 'config-path'],
   number: ['pr'],
   default: {
-    pr: travisPR,
+    pr: ~~travisPR, // eslint-disable-line
     repo: travisPRSlug,
     'config-path': '.github/lightkeeper.json'
   },
