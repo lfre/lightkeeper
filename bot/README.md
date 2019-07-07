@@ -1,6 +1,6 @@
 # Lightkeeper Bot
 
-[![version](https://img.shields.io/badge/version-1.0.1-green.svg)](https://semver.org)
+[![version](https://img.shields.io/badge/version-1.0.3-green.svg)](https://semver.org)
 
 The Lightkeeper Bot is an extension wrapper for [Lightkeeper](https://github.com/lfre/lightkeeper).
 
@@ -18,7 +18,7 @@ Additionally, a `LIGHTKEEPER_API_KEY` is sent as an `Authentication` header.
 ## Usage
 
 ```
-lightkeeperbot [--pr=123] [--repo=owner/name] [--config-path=config/lightkeeper.(js|json)] <baseUrl>
+lightkeeperbot <baseUrl> [--pr=123] [--repo=owner/name] [--config-path=config/lightkeeper.(js|json)]
 ```
 
 | Option | Type | Description | Required | Default |

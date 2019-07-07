@@ -1,6 +1,6 @@
 {
   "name": "lightkeeperbot",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Lightkeeper Bot (CI) Runner",
   "main": "index.js",
   "bin": {
