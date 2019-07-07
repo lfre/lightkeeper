@@ -136,8 +136,6 @@ class Session {
       return;
     }
 
-    this.logger.info('PULL_NUMBER', pullNumber);
-
     // Attempt to post check and comment to Github
     try {
       await Promise.all([
@@ -337,7 +335,6 @@ class Session {
     const header = `| Category | Score | Threshold | Target | Pass |
 | -------- | ----- | ------ | ------ | ------ |`;
     let output = '';
-    let hasHeader = false;
     const addRow = (title, score, threshold, target, pass) => {
       return `| ${title} | ${score} | ${
         threshold === target ? '—' : threshold
@@ -390,9 +387,12 @@ class Session {
       }
       const row = addRow(title, score, thresholdTarget, target, pass);
       const stat = stats[pass] || {};
+      const { hasCategoryHeader = false } = stat;
       stat.total += 1;
-      stat.output += hasHeader ? row : `${header}\n${row}`;
-      hasHeader = true;
+      stat.output += hasCategoryHeader ? row : `${header}\n${row}`;
+      if (!hasCategoryHeader) {
+        stat.hasCategoryHeader = true;
+      }
       // add row to general output
       output += row;
     });

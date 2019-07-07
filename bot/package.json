@@ -1,0 +1,29 @@
+{
+  "name": "lightkeeperbot",
+  "version": "0.0.1",
+  "description": "Lightkeeper Bot (CI) Runner",
+  "main": "index.js",
+  "bin": {
+    "lightkeeperbot": "index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lfre/lightkeeper.git"
+  },
+  "keywords": [
+    "lighthouse",
+    "tests",
+    "budgets",
+    "ci",
+    "deployments"
+  ],
+  "author": "Alfredo Lopez <iam@>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lfre/lightkeeper/issues"
+  },
+  "homepage": "https://github.com/lfre/lightkeeper/bot",
+  "dependencies": {
+    "minimist": "^1.2.0"
+  }
+}

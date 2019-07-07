@@ -27,7 +27,9 @@ const serverless = appFunc => {
       if (!context) return false;
       try {
         await runLightkeeper(context, config, { pullNumber, headBranch, headSha }, true, macros);
-        return res.status(200).send('Process ran succesfully');
+        return res.status(200).send({
+          message: 'Process ran succesfully'
+        });
       } catch (error) {
         return res.status(400).send({
           message: 'An error was found processing the request',

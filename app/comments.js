@@ -1,4 +1,4 @@
-const senders = ['lightkeeper[bot]', 'lightkeeper-dev[bot]'];
+const { BOT_NAME: botName } = process.env;
 
 /**
  * Attempts to update a previous comment or creates a new one
@@ -20,7 +20,7 @@ async function processComment(context, issue_number, body) {
   };
 
   data.some(({ id: comment_id, user: { login = '' } }) => {
-    if (senders.includes(login)) {
+    if (login === botName) {
       params = { ...params, comment_id };
       method = 'updateComment';
       return true;
