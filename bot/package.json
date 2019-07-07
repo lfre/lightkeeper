@@ -1,6 +1,6 @@
 {
   "name": "lightkeeperbot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lightkeeper Bot (CI) Runner",
   "main": "index.js",
   "bin": {
@@ -22,7 +22,7 @@
   "bugs": {
     "url": "https://github.com/lfre/lightkeeper/issues"
   },
-  "homepage": "https://github.com/lfre/lightkeeper/bot",
+  "homepage": "https://github.com/lfre/lightkeeper/tree/master/bot",
   "dependencies": {
     "minimist": "^1.2.0"
   }

@@ -39,7 +39,7 @@ Set a LIGHTKEEPER_HOST environment variable to override.
 
 Usage:
 
-lightkeeperbot [--pr=123] [--repo=owner/name] [--config-path=config/lightkeeper.] <baseUrl>
+lightkeeperbot [--pr=123] [--repo=owner/name] [--config-path=config/lightkeeper.(js|json)] <baseUrl>
 
 Options:
   --pr         [Number] The Pull Request number.
@@ -139,6 +139,10 @@ async function run() {
       process.exit(1);
     }
   }
+  if (!config && typeof config !== 'object') {
+    log('The configuration needs to be a JSON-like object');
+    process.exit(1);
+  }
   const requestParams = {
     pr,
     config,
@@ -150,7 +154,7 @@ async function run() {
 
   if (baseUrl) {
     requestParams.macros = {
-      '{target_url}': baseUrl
+      '{base_url}': baseUrl
     };
   }
 
