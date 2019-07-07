@@ -20,7 +20,7 @@ async function processComment(context, issue_number, body) {
   };
 
   data.some(({ id: comment_id, user: { login = '' } }) => {
-    if (login === botName) {
+    if (login === `${botName}[bot]`) {
       params = { ...params, comment_id };
       method = 'updateComment';
       return true;
