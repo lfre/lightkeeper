@@ -22,13 +22,13 @@ function prepareReport(order, reports) {
     reportSummary += report;
     Object.entries(stats).forEach(([icon, { output = '' }]) => {
       const comment = commentStats[icon];
-      if (!comment) return;
+      if (!comment || !output) return;
       comment.count += 1;
       comment.body += output;
     });
   });
 
-  const commentSummary = Object.values(commentStats).reduce(
+  let commentSummary = Object.values(commentStats).reduce(
     (output, { summary, body, count, options = {} }) => {
       if (!body) return output;
       const text = `${count} URL${count > 1 ? 's' : ''}`;
@@ -38,8 +38,12 @@ function prepareReport(order, reports) {
       });
       return output;
     },
-    `# 🚢 Lightkeeper Report\n`
+    ''
   );
+
+  if (commentSummary) {
+    commentSummary = `# 🚢 Lightkeeper Report\n${commentSummary}`;
+  }
 
   const getTitle = (conclusion, errors) => {
     let title = '';

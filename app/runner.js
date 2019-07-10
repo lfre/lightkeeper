@@ -69,10 +69,10 @@ class Runner {
   async run(url, budgets, config) {
     let endpointUrl = this.lighthouseUrl;
     let auth = this.lighthouseAuth;
-    let requestOptions = this.options;
+    let requestOptions = { ...{}, ...this.options };
 
     // If this run has specific lighthouse options, override base
-    if (config) {
+    if (config && typeof config === 'object' && Object.keys(config).length) {
       const { lhUrl, lhOptions } = this.parseConfig(config);
       requestOptions = { ...requestOptions, lhOptions };
       // This allows a progressive switch to a custom LH endpoint

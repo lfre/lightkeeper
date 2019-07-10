@@ -126,7 +126,7 @@ module.exports = async (req, res) => {
   time(label);
 
   try {
-    result = await lh(url, options, { ...defaultConfig, config }, puppeteerConfig);
+    result = await lh(url, options, { ...defaultConfig, ...config }, puppeteerConfig);
   } catch (err) {
     error = err.friendlyMessage || err.message;
     send(res, error.code || 400, { error });

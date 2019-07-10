@@ -1,10 +1,6 @@
 /* eslint-disable */
 const { resolve } = require('url');
 
-function mergeSettings(base, override) {
-  // budgets map, get keys, get obj from newbUDGETS, loop through keys, check in obj, do unionBy
-}
-
 /**
  *
  * @param {string} summary The dropdown summary
@@ -27,16 +23,6 @@ ${report}
 </details>
 ${linebreak}
 `;
-}
-
-function extendFromSettings(namedSettings) {
-  return function(extend, baseSettings, newSettings = {}) {
-    // if true, merge new into base
-    // if a string, get namedSetting
-    // if namedSetting is true, merge namedSetting, into base, then newSettings into it.
-    // else use namedSettings
-    // if settings is a string, extend a shared setting
-  };
 }
 
 /**
@@ -137,7 +123,6 @@ function urlFormatter(baseUrl, macros = {}) {
 
 module.exports = {
   detailsSummary,
-  extendFromSettings,
   getPullRequestNumber,
   isValidCheck,
   parseConfig,
