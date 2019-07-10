@@ -1,22 +1,21 @@
-/* eslint-disable */
 const merge = require('lodash.merge');
 
-function extendBudgets(base, override) {}
-
 function extendFromSettings(baseSettings, namedSettings) {
-  return function({ extend, budgets, ...routeSettings }) {
-    const settings = { ...{}, ...baseSettings };
+  return function extender({ extend, ...routeSettings }) {
     if (extend === true) {
-      const mergedBudgets = extendBudgets(settings.budgets, budgets);
-      return merge(settings, { ...routeSettings, budgets: mergedBudgets });
+      return merge({}, baseSettings, routeSettings);
     }
     if (typeof extend === 'string') {
-      // attempt to get named setting fallback to global
-      // if named setting has extend true, extend globbal first
-      //
+      // attempts to get the shared setting, fallback to global
+      // TODO: Throw error instead of fallback
+      const { extend: globalExtend, ...sharedSettings } = namedSettings[extend] || baseSettings;
+      if (globalExtend === true) {
+        return merge({}, baseSettings, sharedSettings, routeSettings);
+      }
+      return merge({}, sharedSettings, routeSettings);
     }
 
-    return { ...routeSettings, budgets };
+    return routeSettings;
   };
 }
 

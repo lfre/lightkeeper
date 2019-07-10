@@ -105,8 +105,7 @@ function addToStats(row, type, pass, stats, header) {
  * @param {function} handleFailures The failure handler
  */
 function processCategories(response, budgets, handleFailures) {
-  if (!response || !budgets || typeof response !== 'object' || typeof budgets !== 'object')
-    return '';
+  if (typeof response !== 'object' || typeof budgets !== 'object') return '';
 
   return stats => {
     let output = '';
@@ -175,7 +174,7 @@ function joinBudgetTypes(type, collection = {}) {
  * @param {function} handleFailures The failure handler
  */
 function processLightWallet(response, budgets, handleFailures) {
-  if (!Array.isArray(response) || !Array.isArray(budgets)) return '';
+  if (!Array.isArray(response) || !budgets.length) return '';
   const resourceOutputs = {
     sizes: {
       header: addRow(['Resource', 'Size', 'Threshold', 'Budget', 'Over Budget', 'Pass'], true),

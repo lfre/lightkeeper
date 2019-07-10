@@ -179,6 +179,11 @@ class Session {
     let routeSettings =
       typeof route === 'object' && typeof route.settings === 'object' ? route.settings : false;
 
+    // convert a string into a extend object
+    if (!routeSettings && typeof route.settings === 'string' && route.settings.length > 0) {
+      routeSettings = { extend: route.settings };
+    }
+
     if (routeSettings) {
       try {
         routeSettings = this.extendFromSettings(routeSettings);
@@ -246,8 +251,10 @@ class Session {
 
     const handleFailures = this.handleFailures(reportOnly);
     const { reportOutput, statsOutput } = processBudgets(urlRoute, stats, [
-      processCategories(data.categories, categories, handleFailures),
-      processLightWallet(data.budgets, budgets, handleFailures)
+      data.categories &&
+        categories &&
+        processCategories(data.categories, categories, handleFailures),
+      Array.isArray(budgets) && processLightWallet(data.budgets, budgets, handleFailures)
     ]);
 
     const lhVersion = `_Tested with Lighthouse Version: ${data.version}_`;
