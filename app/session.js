@@ -250,7 +250,8 @@ class Session {
       processLightWallet(data.budgets, budgets, handleFailures)
     ]);
 
-    const reportUrl = data.reportUrl ? `Full Report: ${data.reportUrl}` : '';
+    const lhVersion = `_Tested with Lighthouse Version: ${data.version}_`;
+    const reportUrl = data.reportUrl ? `Full Report: ${data.reportUrl}\n${lhVersion}` : lhVersion;
     // process the full report
     const report = detailsSummary(
       `<b>URL — </b><i>${urlRoute}</i><p>&nbsp; &nbsp; <b>Summary — </b> ${statsOutput}`,

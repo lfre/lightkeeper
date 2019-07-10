@@ -139,7 +139,7 @@ module.exports = async (req, res) => {
   timeEnd(label);
 
   const {
-    lhr: { categories: lhCategories, audits },
+    lhr: { categories: lhCategories, audits, lighthouseVersion: version },
     report // eslint-disable-line
   } = result;
 
@@ -151,5 +151,5 @@ module.exports = async (req, res) => {
 
   const { details: { items: budgets = [] } = {} } = audits['performance-budget'];
 
-  send(res, 200, { categories, budgets });
+  send(res, 200, { categories, budgets, version });
 };
