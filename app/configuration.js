@@ -1,13 +1,11 @@
-const { homepage } = require('../package.json');
-
 const { CONFIG_FILE_PATH = '.github/lightkeeper.json' } = process.env;
 
 class Configuration {
-  constructor(params, status) {
+  constructor(params, status, detailsUrl) {
     this.params = params;
     this.status = status;
-    this.detailsUrl = `${homepage}/#configuration`;
-    this.requiredKeys = ['baseUrl', 'ci'];
+    this.detailsUrl = detailsUrl;
+    this.requiredKeys = ['baseUrl', 'ci', 'type'];
   }
 
   /**
@@ -17,6 +15,7 @@ class Configuration {
     const { context, github, headBranch: ref, pullNumber: pull_number } = this.params;
     const { owner, repo } = context.repo();
     const { data: prFiles } = await github.pullRequests.listFiles(context.repo({ pull_number }));
+    // TODO: if removed, throw 404 status
     const modifiedFiles = prFiles
       .filter(file => ['modified', 'added'].includes(file.status))
       .map(file => file.filename);
@@ -43,6 +42,7 @@ class Configuration {
   async getConfiguration() {
     let configuration = {};
     let missingKeys = this.requiredKeys;
+    let parseError = false;
     try {
       const {
         data: { content }
@@ -56,6 +56,7 @@ class Configuration {
       if (error.status === 404) {
         return configuration;
       }
+      parseError = error.message;
     }
     // Check for required keys
     if (configuration) {
@@ -63,12 +64,19 @@ class Configuration {
         key => !(configuration[key] && typeof configuration[key] === 'string')
       );
       if (missingKeys.length) {
+        let outputTitle = `Missing required keys or invalid types: ${missingKeys.join(', ')}`;
+        if (parseError) {
+          outputTitle = parseError;
+        }
+        const { output: { title = '' } = {} } = await this.status.find();
+        if (title === outputTitle) {
+          return {};
+        }
         this.status.run({
           conclusion: 'action_required',
-          details_url: this.detailsUrl,
           output: {
-            title: `Missing required keys or invalid types: ${missingKeys.join(',')}`,
-            summary: `More info at: ${this.detailsUrl}`
+            title: outputTitle,
+            summary: this.detailsUrl
           }
         });
         return {};

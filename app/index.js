@@ -50,7 +50,7 @@ async function onCompletedCheck(context) {
     context,
     null,
     { pullNumber, headBranch, headSha, installationNode },
-    isValidCheck([name, checkAppName, login])
+    isValidCheck([name, checkAppName, login], 'check')
   );
 }
 

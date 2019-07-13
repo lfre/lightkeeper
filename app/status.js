@@ -33,6 +33,32 @@ class Status {
   }
 
   /**
+   * Finds an existing check run from this application
+   */
+  async find() {
+    const { appName, context, github, headSha: ref } = this.params;
+    const {
+      data: { check_runs: checkRuns = [] }
+    } = await github.checks.listForRef(
+      context.repo({
+        ref
+      })
+    );
+
+    let checkRunOutput = {};
+
+    checkRuns.some(({ name, ...checkRun }) => {
+      if (name === appName) {
+        checkRunOutput = checkRun;
+        return true;
+      }
+      return false;
+    });
+
+    return checkRunOutput;
+  }
+
+  /**
    * Adds/updates a check run.
    * @param {object} data The status options
    * @param {string} method The check method

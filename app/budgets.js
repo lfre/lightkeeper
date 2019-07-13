@@ -253,7 +253,7 @@ function processLightWallet(response, budgets, handleFailures) {
     return Object.values(resourceOutputs).reduce((result, { header, output }) => {
       if (result && output) {
         result += `\n${header}${output}`;
-      } else {
+      } else if (output) {
         result += `${header}${output}`;
       }
       return result;
@@ -268,7 +268,7 @@ function processBudgets(urlRoute, stats, budgets = []) {
     const output = runBudget(stats);
     if (reportOutput && output) {
       reportOutput += `\n${output}`;
-    } else {
+    } else if (output) {
       reportOutput += output;
     }
   });
@@ -279,7 +279,7 @@ function processBudgets(urlRoute, stats, budgets = []) {
     const output = Object.values(outputs).reduce((accOutput, { output: budgetOutput }) => {
       if (accOutput && budgetOutput) {
         accOutput += `\n${budgetOutput}`;
-      } else {
+      } else if (budgetOutput) {
         accOutput += budgetOutput;
       }
       return accOutput;

@@ -130,7 +130,7 @@ module.exports = async (req, res) => {
   } catch (err) {
     error = err.friendlyMessage || err.message;
     send(res, error.code || 400, { error });
-    log('There was a Lighthouse error:', error);
+    log(`There was a Lighthouse error for: ${url}`, error);
     timeEnd(label);
     return;
   }
@@ -139,7 +139,7 @@ module.exports = async (req, res) => {
   timeEnd(label);
 
   const {
-    lhr: { categories: lhCategories, audits, lighthouseVersion: version },
+    lhr: { categories: lhCategories, audits, lighthouseVersion },
     report // eslint-disable-line
   } = result;
 
@@ -151,5 +151,5 @@ module.exports = async (req, res) => {
 
   const { details: { items: budgets = [] } = {} } = audits['performance-budget'];
 
-  send(res, 200, { categories, budgets, version });
+  send(res, 200, { categories, budgets, lighthouseVersion });
 };

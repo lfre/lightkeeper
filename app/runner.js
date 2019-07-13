@@ -1,4 +1,5 @@
 const axios = require('axios');
+const merge = require('lodash.merge');
 const { parseConfig } = require('./util');
 
 const { LIGHTHOUSE_URL: lighthouseUrl, WEBHOOK_SECRET: secret } = process.env;
@@ -73,8 +74,8 @@ class Runner {
 
     // If this run has specific lighthouse options, override base
     if (config && typeof config === 'object' && Object.keys(config).length) {
-      const { lhUrl, lhOptions } = this.parseConfig(config);
-      requestOptions = { ...requestOptions, lhOptions };
+      const { lhUrl, lhOptions } = parseConfig(config);
+      requestOptions = merge(requestOptions, lhOptions);
       // This allows a progressive switch to a custom LH endpoint
       if (lhUrl && lhUrl !== lighthouseUrl) {
         endpointUrl = lhUrl;

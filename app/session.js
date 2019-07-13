@@ -1,3 +1,4 @@
+const { homepage } = require('../package.json');
 const { getStats, processBudgets, processCategories, processLightWallet } = require('./budgets');
 const Status = require('./status');
 const Configuration = require('./configuration');
@@ -12,7 +13,8 @@ class Session {
     this.appParams = { appName };
     this.logger = logger;
     this.status = new Status(this.appParams);
-    this.configuration = new Configuration(this.appParams, this.status);
+    this.configHelp = `See [Configuration](${homepage}/#configuration) for help.`;
+    this.configuration = new Configuration(this.appParams, this.status, this.configHelp);
   }
 
   setVariables() {
@@ -46,22 +48,26 @@ class Session {
     const {
       baseUrl,
       ci: ciName,
-      type = 'check',
+      type = '',
       routes = [],
       settings = {},
-      namedSettings = {}
+      sharedSettings = {}
     } = await (config || this.configuration.getConfiguration());
 
     // return early if the config targets a different type
-    // this allows targeting deployments, or older `status` workflows.
+    // this allows targeting deployments, or older `status` workflows from the same provider.
     if (typeof isValid === 'function') {
-      const ciAppName = ciName.toLowerCase();
-      isValid = await isValid(type, [ciAppName, `${ciAppName}[bot]`]);
+      if (ciName && type) {
+        const ciAppName = ciName.toLowerCase();
+        isValid = await isValid(type, [ciAppName, `${ciAppName}[bot]`]);
+      } else {
+        isValid = false;
+      }
     }
 
     if (!baseUrl || !isValid) return;
 
-    // prepare variables since it's valid run
+    // prepare variables since it's a valid run
     this.setVariables();
 
     // Setup the runner, and exit if the url or token are empty
@@ -72,12 +78,23 @@ class Session {
       return;
     }
     // set up the url formatter
-    this.urlFormatter = urlFormatter(baseUrl, {
-      '{branch}': headBranch,
-      '{commit_hash}': headSha,
-      '{pr_number}': pullNumber,
-      ...macros
-    });
+    try {
+      this.urlFormatter = urlFormatter(baseUrl, {
+        '{branch}': headBranch,
+        '{commit_hash}': headSha,
+        '{pr_number}': pullNumber,
+        ...macros
+      });
+    } catch (error) {
+      await this.status.run({
+        conclusion: 'failure',
+        output: {
+          title: error.message,
+          summary: this.configHelp
+        }
+      });
+      return;
+    }
 
     // Setup routes or only run the baseUrl
     const urlRoutes =
@@ -111,14 +128,14 @@ class Session {
     this.logger.info('Started processing URLs...');
 
     this.settings = settings;
-    this.extendSettings = extendFromSettings(settings, namedSettings);
+    this.extendSettings = extendFromSettings(settings, sharedSettings);
 
     // Process each route and send a request
     await Promise.all(this.processRoutes(urlRoutes));
 
     this.logger.info('Finished processing URLs');
 
-    const { reportSummary = '', commentSummary = '', getTitle } = prepareReport(
+    const { reportSummary = '', commentSummary = '', getTitle, warningsFound } = prepareReport(
       this.order,
       this.reports
     );
@@ -136,6 +153,10 @@ class Session {
       return;
     }
 
+    if (warningsFound && this.conclusion === 'success') {
+      this.conclusion = 'neutral';
+    }
+
     // Attempt to post check and comment to Github
     try {
       await Promise.all([
@@ -143,7 +164,7 @@ class Session {
         status({
           conclusion: this.conclusion,
           output: {
-            title: getTitle(this.conclusion, this.errorsFound),
+            title: getTitle(this.conclusion, this.errorsFound, warningsFound),
             summary: reportSummary
           }
         }),
@@ -186,14 +207,14 @@ class Session {
 
     if (routeSettings) {
       try {
-        routeSettings = this.extendFromSettings(routeSettings);
+        routeSettings = this.extendSettings(routeSettings);
       } catch (err) {
         this.logger.error('There was an error processing the route settings', err);
         // push route, and add route to report
-        this.order.push(route);
-        this.reports.set(route, {
+        this.order.push(urlRoute);
+        this.reports.set(urlRoute, {
           report: detailsSummary(
-            `❌ <b>There was an error processing —</b> <i>${route}</i>`,
+            `❌ <b>There was an error processing —</b> <i>${urlRoute}</i>`,
             'Please check your configuration values'
           )
         });
@@ -220,7 +241,7 @@ class Session {
       this.reports.set(urlRoute, {
         report: detailsSummary(
           `❌ <b>No budgets were found in config for —</b> <i>${urlRoute}</i>`,
-          'Please include categories or budgets in settings'
+          `Please include categories or budgets in settings.\n${this.configHelp}`
         )
       });
       this.conclusion = 'failure';
@@ -257,7 +278,7 @@ class Session {
       Array.isArray(budgets) && processLightWallet(data.budgets, budgets, handleFailures)
     ]);
 
-    const lhVersion = `_Tested with Lighthouse Version: ${data.version}_`;
+    const lhVersion = `_Tested with Lighthouse Version: ${data.lighthouseVersion}_`;
     const reportUrl = data.reportUrl ? `Full Report: ${data.reportUrl}\n${lhVersion}` : lhVersion;
     // process the full report
     const report = detailsSummary(

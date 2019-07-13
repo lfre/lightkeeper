@@ -52,7 +52,7 @@ async function getPullRequestNumber(github, headSha) {
  * @param {string} typeCheck The string to check against
  * @param {function} checkFunction An optional function to override the equal check
  */
-function isValidCheck(namesToCheck = [], typeCheck = 'check', checkFunction) {
+function isValidCheck(namesToCheck = [], typeCheck = '', checkFunction) {
   const checker = typeof checkFunction === 'function' ? checkFunction : false;
   return (type, ciNames) => {
     const valid = namesToCheck.filter(checkName => {
@@ -73,7 +73,7 @@ function isValidCheck(namesToCheck = [], typeCheck = 'check', checkFunction) {
  */
 function replaceMacros(keyMap) {
   const regexKeys = Object.keys(keyMap);
-  regexKeys.push('{commit_hash:(d)}');
+  regexKeys.push('{commit_hash:(\\d)}');
 
   return url => {
     const rgxp = new RegExp(regexKeys.join('|'), 'gi');
