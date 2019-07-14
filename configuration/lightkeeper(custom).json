@@ -1,0 +1,50 @@
+{
+  "baseUrl": "https://example.com",
+  "ci": "[ci]",
+  "type": "[type]",
+  "settings": {
+    "categories": {
+      "pwa": {
+        "target": 90,
+        "threshold": 40,
+        "warning": 10
+      }
+    }
+  },
+  "sharedSettings": {
+    "galleries": {
+      "extend": true,
+      "categories": {
+        "pwa": {
+          "threshold": 20
+        }
+      },
+      "lighthouse": {
+        "options": {
+          "emulatedFormFactor": "desktop",
+          "extraHeaders": {
+            "X-CUSTOM-HEADER": "gallery-header"
+          }
+        }
+      }
+    }
+  },
+  "routes": [
+    "/article/1/",
+    {
+      "url": "gallery/1",
+      "settings": "galleries"
+    },
+    {
+      "url": "gallery/2",
+      "settings": {
+        "extends": "galleries",
+        "categories": {
+          "pwa": {
+            "target": 80
+          }
+        }
+      }
+    }
+  ]
+}

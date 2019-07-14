@@ -5,7 +5,7 @@ const Configuration = require('./configuration');
 const extendFromSettings = require('./settings');
 const processComment = require('./comments');
 const Runner = require('./runner'); // 🏃
-const prepareReport = require('./report');
+const { prepareReport } = require('./report');
 const { detailsSummary, urlFormatter } = require('./util');
 
 class Session {

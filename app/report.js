@@ -1,5 +1,8 @@
 const { detailsSummary } = require('./util');
 
+const reportHeader = '# 🚢 Lightkeeper Report';
+const passCommentText = `${reportHeader}\n### All tests passed! 🎉`;
+
 function prepareReport(order, reports) {
   let reportSummary = '';
   let warningsFound = false;
@@ -45,9 +48,7 @@ function prepareReport(order, reports) {
     ''
   );
 
-  if (commentSummary) {
-    commentSummary = `# 🚢 Lightkeeper Report\n${commentSummary}`;
-  }
+  commentSummary = commentSummary ? `${reportHeader}\n${commentSummary}` : passCommentText;
 
   const getTitle = (conclusion, errors, warnings) => {
     let title = '';
@@ -75,4 +76,4 @@ function prepareReport(order, reports) {
   };
 }
 
-module.exports = prepareReport;
+module.exports = { prepareReport, passCommentText };
