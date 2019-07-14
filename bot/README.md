@@ -31,10 +31,15 @@ lightkeeperbot <baseUrl> [--pr=123] [--repo=owner/name] [--config-path=config/li
 
 See Lightkeeper's [configuration](https://github.com/lfre/lightkeeper#configuration).
 
-- Set the `baseUrl` property to `{base_url}`, and Ligthkeeper will use the `<baseUrl>` option.
-- To prevent the app from possibly running twice, and/or posting an invalid config check:
-  - Modify the `ci` property to `lightkeeperbot`.
-- The configuration file can be either `json` or `js`.
+Use the following values:
+
+| baseUrl | ci | type |
+| ------- | -- | ---- |
+| `{base_url}` | `lightkeeperbot` | `event`
+
+Lightkeeper will replace `{base_url}` with the provided `<baseUrl>`.
+
+**NOTE:** The configuration file can be either `json` or `js`.
 
 ### Javascript Configuration:
 
