@@ -253,13 +253,17 @@ class Session {
 
     try {
       ({ data } = await this.runner.run(urlRoute, budgets, lighthouse));
-    } catch (error) {
-      const { message: errorMessage = 'There was a problem with the Lighthouse request' } = error;
-      this.logger.error('Lighthouse request failed:', errorMessage);
+    } catch (err) {
+      const {
+        response: { data: { error: responseMessage } = {} } = {},
+        message: errorMessage = 'There was a problem with the Lighthouse request'
+      } = err;
+      const outputError = responseMessage || errorMessage;
+      this.logger.error('Lighthouse request failed:', outputError);
       this.reports.set(urlRoute, {
         report: detailsSummary(
           `❌ <b>Lighthouse request failed on —</b> <i>${urlRoute}</i>`,
-          `\`\`\`\n${errorMessage}\n\`\`\`\n`
+          `\`\`\`\n${outputError}\n\`\`\`\n`
         )
       });
       this.conclusion = 'failure';

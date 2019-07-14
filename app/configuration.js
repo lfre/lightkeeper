@@ -15,13 +15,25 @@ class Configuration {
     const { context, github, headBranch: ref, pullNumber: pull_number } = this.params;
     const { owner, repo } = context.repo();
     const { data: prFiles } = await github.pullRequests.listFiles(context.repo({ pull_number }));
-    // TODO: if removed, throw 404 status
-    const modifiedFiles = prFiles
-      .filter(file => ['modified', 'added'].includes(file.status))
-      .map(file => file.filename);
+    let prFile = false;
 
-    // check if the PR has a modified configuration
-    if (modifiedFiles.includes(CONFIG_FILE_PATH)) {
+    prFiles.some(({ filename, status }) => {
+      if (filename === CONFIG_FILE_PATH) {
+        // If a PR is removing the config
+        // prevent fallback
+        if (status === 'removed') {
+          const error = new Error();
+          error.status = 404;
+          throw error;
+        }
+        prFile = true;
+        return prFile;
+      }
+      return prFile;
+    });
+
+    // If a PR is adding/modifying a config, use that
+    if (prFile) {
       return github.repos.getContents({
         owner,
         repo,
@@ -29,6 +41,7 @@ class Configuration {
         ref
       });
     }
+
     return github.repos.getContents({
       owner,
       repo,
