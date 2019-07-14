@@ -1,5 +1,7 @@
 <div align="center">
 
+![](https://raw.githubusercontent.com/wiki/lfre/lightkeeper/images/lightkeeper-header-250.png)
+
 # ⚓ _Lightkeeper_ (alpha)
 
 ![](https://badgen.net/github/status/lfre/lightkeeper/master)
@@ -8,7 +10,7 @@
 
 Run [Lighthouse](https://developers.google.com/web/tools/lighthouse/) tests in Pull Request URLs with multiple routes. Prevent regressions through custom budgets in a flexible and extensible configuration.
 
-![](https://img.shields.io/static/v1.svg?label=INSTALL&message=GITHUB&color=brightgreen&link=https://github.com/apps/lightkeeper-ci&style=for-the-badge)
+[![](https://img.shields.io/static/v1.svg?label=INSTALL&message=GITHUB&color=brightgreen&link=https://github.com/apps/lightkeeper-ci&style=for-the-badge)](https://github.com/apps/lightkeeper-ci)
 
 ---
 ## It works with:
@@ -27,26 +29,26 @@ On one side, there are several tools to monitor production/staging environments,
 
 This requires that all testing must happen at the Pull Request level on a unique URL per branch and/or commit, and while there are tools that support these types of Performance tests, they all suffer from common problems:
 
-* Single URL
+* **Single URL.**
     * A site is not a single URL. For several sites the most important page is a dynamic route **not** the homepage.
   
-* Run and block the CI build process
+* **Run and block the CI build process.**
     * When all tests run on every Pull Request, their intention is to block merging if any issues are found, but during the different stages of development, the single most important task is to get an URL preview. Failing a build on another stage might require a dive into the build dashboard or logs to distinguish errors. Sending a notification, or posting a comment at the end of a specific task can help with this, but it requires additional effort.
   
-* If used for multiple URLs manually, there is no consolidated report.
+* **If used for multiple URLs manually, there is no consolidated report.**
     * Pull Request pages can be overwhelming at times. From Peer Reviews to comments added by other tools, posting a comment per URL is too noisy.
 
 ## This Solution 
 
 Lightkeeper attempts to solve each one of these issues: 🤞
 
-* Multiple URL based
+* **Multiple URL support.**
     * Configure 1 to many URL routes, from separate domains or extending a base URL.
   
-* Decoupled from the CI build process
+* **Decoupled from the CI build process.**
     * It runs when the CI build finishes and is successful. For complex build set ups, the [Lightkeeper Bot](#lightkeeper-bot) is available to trigger an event. This allows the build to continue without stalling waiting for a response.
   
-* Consolidated reports, and expandable comments.
+* **Consolidated reports, and expandable comments.**
     * It posts a consolidated report of all tests, and includes only relevant information in the comment.
 
 Most importantly, Lightkeeper provides granular control of settings per route, from budgets to the Lighthouse endpoint and its options, including chrome flags in the puppeteer configuration. 

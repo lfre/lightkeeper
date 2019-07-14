@@ -202,7 +202,7 @@ class Session {
 
     // convert a string into a extend object
     if (!routeSettings && typeof route.settings === 'string' && route.settings.length > 0) {
-      routeSettings = { extend: route.settings };
+      routeSettings = { extends: route.settings };
     }
 
     if (routeSettings) {

@@ -13,7 +13,7 @@
   },
   "sharedSettings": {
     "galleries": {
-      "extend": true,
+      "extends": true,
       "categories": {
         "pwa": {
           "threshold": 20
