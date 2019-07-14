@@ -15,13 +15,9 @@ Run [Lighthouse](https://developers.google.com/web/tools/lighthouse/) tests in P
 
 _Any Github Check Run, Deployment or Status, including:_
 
-<br>
-
-![](https://raw.githubusercontent.com/wiki/lfre/lightkeeper/images/logos/zeit.png?foobar)
+![](https://raw.githubusercontent.com/wiki/lfre/lightkeeper/images/logos/supported-ci.jpg)
 
 </div>
-
-<br>
 
 ## The Problem
 
@@ -66,6 +62,7 @@ Add a `lightkeeper.json` file in a `.github` folder. Start from the [default con
 There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budgeting tool, so at least a single type of budget is needed to run sucessfully.
 
 - Replace the `baseUrl` with a valid URL. Since Pull Request URLs are dynamic, macros are available:
+  
   | Macro | Details |
   | ----  | ------  |
   | `{pr_number}` | The Pull Request Number. |
@@ -92,7 +89,7 @@ There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budge
     If multiple checks are running (e.g: Integration Tests, Mobile Tests, etc)
 
     Use the full name of the specific workflow as it appears in Github, instead of `circleci`.
-  </details><br>
+  </details>
   <details>
     <summary>Netlify</summary>
 
@@ -103,7 +100,7 @@ There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budge
       "type": "status"
     }
     ```
-  </details><br/>
+  </details>
   <details>
     <summary>Travis CI</summary>
 
@@ -113,7 +110,7 @@ There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budge
       "type": "check"
     }
     ```
-  </details><br>
+  </details>
   <details>
     <summary>Zeit Now</summary>
 
@@ -124,7 +121,7 @@ There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budge
       "type": "deployment"
     }
     ```
-  </details><br>
+  </details>
 
 > If you're unsure about the name of your CI tool, it's the name displayed under `Developer` in the application page:
 > https://github.com/apps/[app-name]
@@ -133,7 +130,7 @@ There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budge
 
 Visit the [wiki]() for a full list of configuration options.
 
-Additionally, there is a [custom configuration](/configuration/custom.json) example.
+Additionally, there is a [custom configuration](/configuration/lightkeeper(custom).json) example.
 
 ## Lightkeeper Bot 🤖
 
@@ -167,14 +164,14 @@ See the [full docs](https://www.npmjs.com/package/lightkeeperbot).
 
 ## FAQ
 
-- Why isn't this part of the Lighthouse Bot?
+- **Why isn't this part of the Lighthouse Bot?**
   - That was my original intention after reading their [FAQ](https://github.com/GoogleChromeLabs/lighthousebot#why-not-a-github-webhook), but after I realized the best format is a Github App along with other features, it was clear the changes would be too drastic. However, `Lightkeeper` is compatible with their Ligthouse server located at https://builder-dot-lighthouse-ci.appspot.com/ci, if you choose to continue using it.
 
-- Why isn't this a Github Action?
+- **Why isn't this a Github Action?**
   - I wanted it to be and still do. However, besides the fact that Github Actions are (at the time of writing) Private Beta; it can lead to visual noise when skipping a check. <br>![](https://pbs.twimg.com/media/D-9aZn2WwAUv6Em?format=jpg&name=small)<br>
   If in the future, Github could allow a subset level of notifications per event (e.g: check run starts vs check run complete), and possibly a filter on `status` (only run action when a check run completes and is succesful); I'd be more than happy to switch since it removes the need for a server, and allows for securely sharing secrets.
   
-- I'm getting a Lighthouse error in my reports.
+- **I'm getting a Lighthouse error in my reports.**
   - If your page fails in [Page Speed Insights](https://developers.google.com/speed/pagespeed/insights/), it will most likely fail in Lightkeeper too. Consider changing the Lighthouse `throttling` options, or device emulation.
 
 ## Related Projects
@@ -188,7 +185,7 @@ Please open an issue if you have any questions, feature requests or problems, an
 
 ## Donating
 
-If you find this tool useful, and want me to spend more time on it. Consider [Donating](https://www.paypal.me/alfredolo/5).
+If you find this tool useful, and want me to spend more time on it. Consider **[Donating](https://www.paypal.me/alfredolo/5)**.
 
 ---
 
