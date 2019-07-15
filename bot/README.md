@@ -1,6 +1,6 @@
 # Lightkeeper Bot
 
-[![version](https://img.shields.io/badge/version-1.0.3-green.svg)](https://semver.org)
+[![version](https://img.shields.io/badge/version-1.0.4-green.svg)](https://semver.org)
 
 The Lightkeeper Bot is an extension wrapper for [Lightkeeper](https://github.com/lfre/lightkeeper).
 
