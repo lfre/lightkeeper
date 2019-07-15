@@ -12,6 +12,8 @@ Run [Lighthouse](https://developers.google.com/web/tools/lighthouse/) tests in P
 
 [![](https://img.shields.io/static/v1.svg?label=INSTALL&message=GITHUB&color=brightgreen&link=https://github.com/apps/lightkeeper-ci&style=for-the-badge)](https://github.com/apps/lightkeeper-ci)
 
+![](https://raw.githubusercontent.com/wiki/lfre/lightkeeper/images/lightkeeper-status.gif)
+![](https://raw.githubusercontent.com/wiki/lfre/lightkeeper/images/warnings.png) ![](https://raw.githubusercontent.com/wiki/lfre/lightkeeper/images/failures.png)
 ---
 ## It works with:
 
@@ -50,6 +52,7 @@ Lightkeeper attempts to solve each one of these issues: 🤞
   
 * **Consolidated reports, and expandable comments.**
     * It posts a consolidated report of all tests, and includes only relevant information in the comment.
+    ![](https://raw.githubusercontent.com/wiki/lfre/lightkeeper/images/comment-500.gif)
 
 Most importantly, Lightkeeper provides granular control of settings per route, from budgets to the Lighthouse endpoint and its options, including chrome flags in the puppeteer configuration. 
 
