@@ -130,7 +130,7 @@ There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budge
 
 ## Configuration
 
-Visit the [wiki]() for a full list of configuration options.
+Visit the [wiki](https://github.com/lfre/lightkeeper/wiki/Configuration-Options) for a full list of configuration options.
 
 Additionally, there is a [custom configuration](/configuration/lightkeeper(custom).json) example.
 
