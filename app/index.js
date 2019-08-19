@@ -85,12 +85,13 @@ async function onRequestedCheck(context) {
 async function onDeployment(context) {
   const {
     deployment_status: {
+      id: status_id,
       state,
       creator: { login },
       target_url,
       environment
     },
-    deployment: { sha: headSha },
+    deployment: { id: deployment_id, sha: headSha },
     installation: { node_id: installationNode }
   } = context.payload;
 
@@ -112,12 +113,30 @@ async function onDeployment(context) {
     })
   );
 
+  // retrieve the `environment_url`
+  // TODO: Switch to `repos.getDeploymentStatus` when correct header is added
+  const {
+    data: { environment_url }
+  } = await context.github.request(
+    'GET /repos/:owner/:repo/deployments/:deployment_id/statuses/:status_id ',
+    context.repo({
+      deployment_id,
+      status_id,
+      headers: {
+        accept: 'application/vnd.github.ant-man-preview+json'
+      }
+    })
+  );
+
   await run(
     context,
     null,
     { pullNumber, headBranch, headSha, installationNode },
     isValidCheck([login], 'deployment'),
-    { '{target_url}': target_url }
+    {
+      '{target_url}': target_url,
+      '{environment_url}': environment_url
+    }
   );
 }
 
@@ -151,7 +170,7 @@ async function onStatus(context) {
   );
 }
 
-function Lightkeeper(app) {
+async function Lightkeeper(app) {
   // bind events once to the app
   if (app.runLightkeeper) return run;
   app.runLightkeeper = run;
