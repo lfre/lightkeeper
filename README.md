@@ -71,12 +71,15 @@ There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budge
   | Macro | Details |
   | ----  | ------  |
   | `{pr_number}` | The Pull Request Number. |
-  | `{branch}` | The branch name. |
+  | `{repo}` | A slugified repo name. |
+  | `{branch}` | A slugified branch name. |
   | `{commit_hash}` | The full commit SHA. |
   | `{commit_hash:n}` | A trimmed SHA, where `n` is a digit. |
   | *`{target_url}` | The target url from the Github Response. |
+  | **`{environment_url}` | The url from the Deployment status. |
 
   \* Available for statuses and deployments.
+  \** Available for deployments.
 
 - Replace `ci` and `type` for your CI tool. Examples:
 
@@ -130,6 +133,10 @@ There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budge
 
 > If you're unsure about the name of your CI tool, it's the name displayed under `Developer` in the application page:
 > https://github.com/apps/[app-name]
+
+**NOTE:** These providers and their settings can change. If the provided `ci` name above does not work, use the full visible name:
+
+![](https://raw.githubusercontent.com/wiki/lfre/lightkeeper/images/full-ci-name.png)
 
 ## Configuration
 
