@@ -98,7 +98,7 @@ async function onDeployment(context) {
   // skip for started or failed statuses
   if (state !== 'success' || !headSha || environment !== 'staging') return;
 
-  const pullNumber = await getPullRequestNumber(context.github, headSha);
+  const pullNumber = await getPullRequestNumber(context, headSha);
 
   if (!pullNumber) return;
 
@@ -157,7 +157,7 @@ async function onStatus(context) {
 
   if (state !== 'success' || !headSha) return;
 
-  const pullNumber = await getPullRequestNumber(context.github, headSha);
+  const pullNumber = await getPullRequestNumber(context, headSha);
 
   if (!pullNumber) return;
 
