@@ -124,7 +124,7 @@ There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budge
 
     ```json
     {
-      "baseUrl": "{target_url}",
+      "baseUrl": "{environment_url}",
       "ci": "now",
       "type": "deployment"
     }

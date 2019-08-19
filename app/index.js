@@ -170,7 +170,7 @@ async function onStatus(context) {
   );
 }
 
-async function Lightkeeper(app) {
+function Lightkeeper(app) {
   // bind events once to the app
   if (app.runLightkeeper) return run;
   app.runLightkeeper = run;
