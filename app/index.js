@@ -85,19 +85,20 @@ async function onRequestedCheck(context) {
 async function onDeployment(context) {
   const {
     deployment_status: {
+      id: status_id,
       state,
       creator: { login },
       target_url,
       environment
     },
-    deployment: { sha: headSha },
+    deployment: { id: deployment_id, sha: headSha },
     installation: { node_id: installationNode }
   } = context.payload;
 
   // skip for started or failed statuses
   if (state !== 'success' || !headSha || environment !== 'staging') return;
 
-  const pullNumber = await getPullRequestNumber(context.github, headSha);
+  const pullNumber = await getPullRequestNumber(context, headSha);
 
   if (!pullNumber) return;
 
@@ -112,12 +113,30 @@ async function onDeployment(context) {
     })
   );
 
+  // retrieve the `environment_url`
+  // TODO: Switch to `repos.getDeploymentStatus` when correct header is added
+  const {
+    data: { environment_url }
+  } = await context.github.request(
+    'GET /repos/:owner/:repo/deployments/:deployment_id/statuses/:status_id ',
+    context.repo({
+      deployment_id,
+      status_id,
+      headers: {
+        accept: 'application/vnd.github.ant-man-preview+json'
+      }
+    })
+  );
+
   await run(
     context,
     null,
     { pullNumber, headBranch, headSha, installationNode },
     isValidCheck([login], 'deployment'),
-    { '{target_url}': target_url }
+    {
+      '{target_url}': target_url,
+      '{environment_url}': environment_url
+    }
   );
 }
 
@@ -138,7 +157,7 @@ async function onStatus(context) {
 
   if (state !== 'success' || !headSha) return;
 
-  const pullNumber = await getPullRequestNumber(context.github, headSha);
+  const pullNumber = await getPullRequestNumber(context, headSha);
 
   if (!pullNumber) return;
 

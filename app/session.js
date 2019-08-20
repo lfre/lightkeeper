@@ -1,3 +1,4 @@
+const slugify = require('@sindresorhus/slugify');
 const { homepage } = require('../package.json');
 const { getStats, processBudgets, processCategories, processLightWallet } = require('./budgets');
 const Status = require('./status');
@@ -77,10 +78,14 @@ class Session {
       this.logger.error('Runner setup failed', err);
       return;
     }
+
+    const { repo } = context.repo();
+
     // set up the url formatter
     try {
       this.urlFormatter = urlFormatter(baseUrl, {
-        '{branch}': headBranch,
+        '{repo}': slugify(repo),
+        '{branch}': slugify(headBranch),
         '{commit_hash}': headSha,
         '{pr_number}': pullNumber,
         ...macros

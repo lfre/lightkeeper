@@ -27,21 +27,26 @@ ${linebreak}
 
 /**
  * Finds the pull request number from a commit hash
- * @param {object} github Octokit github client
+ * @param {object} context The github event contextt
  * @param {string} headSha The commit hash in the PR
  */
-async function getPullRequestNumber(github, headSha) {
-  const { data: { items = [] } = {} } = await github.search.issuesAndPullRequests({
-    q: `SHA=${headSha}`,
-    per_page: 1
+async function getPullRequestNumber(context, headSha) {
+  const {
+    data: pullRequests = []
+  } = await context.github.repos.listPullRequestsAssociatedWithCommit(
+    context.repo({
+      commit_sha: headSha,
+      per_page: 100
+    })
+  );
+
+  let pullNumber = null;
+
+  pullRequests.some(({ state, number }) => {
+    if (state === 'closed') return false;
+    pullNumber = number;
+    return true;
   });
-
-  if (!items.length) return null;
-
-  // find the pr number
-  const { number: pullNumber, state } = items.pop();
-
-  if (state === 'closed') return null;
 
   return pullNumber;
 }
@@ -110,14 +115,14 @@ function parseConfig(config = {}) {
 
 function urlFormatter(baseUrl, macros = {}) {
   const macroReplacer = replaceMacros(macros);
-  const base = new URL(macroReplacer(baseUrl)).href;
+  const { href: base, pathname: basePath = '' } = new URL(macroReplacer(baseUrl));
   return url => {
     if (!url || url === base) return base;
 
     if (url.startsWith('http')) {
       return new URL(macroReplacer(url)).href;
     }
-    return macroReplacer(resolve(base, url));
+    return macroReplacer(resolve(base, resolve(basePath, url.replace(/^\/+/, ''))));
   };
 }
 
