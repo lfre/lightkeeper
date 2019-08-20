@@ -115,14 +115,14 @@ function parseConfig(config = {}) {
 
 function urlFormatter(baseUrl, macros = {}) {
   const macroReplacer = replaceMacros(macros);
-  const base = new URL(macroReplacer(baseUrl)).href;
+  const { href: base, pathname: basePath = '' } = new URL(macroReplacer(baseUrl));
   return url => {
     if (!url || url === base) return base;
 
     if (url.startsWith('http')) {
       return new URL(macroReplacer(url)).href;
     }
-    return macroReplacer(resolve(base, url));
+    return macroReplacer(resolve(base, resolve(basePath, url.replace(/^\/+/, ''))));
   };
 }
 
