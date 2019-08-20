@@ -71,15 +71,16 @@ There are 3 required fields: `baseUrl`, `ci`, and `type`. Lightkeeper is a budge
   | Macro | Details |
   | ----  | ------  |
   | `{pr_number}` | The Pull Request Number. |
-  | `{repo}` | A slugified repo name. |
-  | `{branch}` | A slugified branch name. |
+  | `{repo}` | A _slugified_ repo name. |
+  | `{branch}` | A _slugified_ branch name. |
   | `{commit_hash}` | The full commit SHA. |
   | `{commit_hash:n}` | A trimmed SHA, where `n` is a digit. |
   | *`{target_url}` | The target url from the Github Response. |
   | **`{environment_url}` | The url from the Deployment status. |
 
   \* Available for statuses and deployments.
-  \** Available for deployments.
+
+  \** Available for deployments only.
 
 - Replace `ci` and `type` for your CI tool. Examples:
 
