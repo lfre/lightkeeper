@@ -189,7 +189,7 @@ See the [full docs](https://www.npmjs.com/package/lightkeeperbot).
 
 ## Related Projects
 
-- [Performance Budgets (Docker)](https://github.com/boyney123/performance-budget)
+- [Performance Budgets (Docker)](https://github.com/boyney123/performance-budgets)
 - [Zeit Integrations Platform](https://zeit.co/blog/zeit-now-integrations-platform)
 
 ## Contributing
